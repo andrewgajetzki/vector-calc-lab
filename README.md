@@ -48,6 +48,47 @@ You can also run the built-in demo:
 python main.py
 ```
 
+## Polar Coordinates
+
+The polar-coordinate tools work with points and curves of the form:
+
+```text
+r = r(theta)
+```
+
+Angles are measured in radians. You can convert between polar and rectangular
+coordinates, find equivalent polar representations, sample polar curves, and
+turn a polar curve into an equivalent parametric curve.
+
+```python
+import math
+
+from src.polar_coordinates import (
+    PolarPoint,
+    cartesian_to_polar,
+    make_polar_curve,
+    polar_to_cartesian,
+    polar_to_cartesian_table,
+)
+
+print(polar_to_cartesian(2, math.pi / 2))
+print(cartesian_to_polar(0, -3))
+print(PolarPoint(2, math.pi / 6).equivalent())
+
+curve = make_polar_curve(lambda theta: 1 + math.cos(theta))
+
+print(polar_to_cartesian_table(curve.sample(0, math.pi, steps=4)))
+print(curve.to_parametric_curve().arc_length(0, math.pi))
+```
+
+Formulas supported:
+
+- `x = r*cos(theta)`
+- `y = r*sin(theta)`
+- `r = sqrt(x^2 + y^2)`
+- `theta = atan2(y, x)`
+- equivalent points `(r, theta + 2*pi*k)` and `(-r, theta + (2*k + 1)*pi)`
+
 ## Homogeneous Second-Order Linear ODEs
 
 The ODE solver works with equations of the form:

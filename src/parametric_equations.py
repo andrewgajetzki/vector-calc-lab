@@ -1,4 +1,4 @@
-"""Utilities for Chapter 1.1 and 1.2: parametric equations."""
+"""Utilities for parametric equations and parametric curves."""
 
 from __future__ import annotations
 

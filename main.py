@@ -3,16 +3,24 @@
 from __future__ import annotations
 
 from src.parametric_equations import make_curve, points_table
+from src.polar_coordinates import make_polar_curve, polar_to_cartesian_table
 
 
-def run_chapter_1_1_demo() -> None:
-    """Show the Chapter 1.1 parametric-equation tools on a sample curve."""
+def run_demo() -> None:
+    """Show the available calculus helpers on sample curves."""
+    run_parametric_demo()
+    print()
+    run_polar_demo()
+
+
+def run_parametric_demo() -> None:
+    """Show the parametric-equation tools on a sample curve."""
     curve = make_curve(
         x_of_t=lambda t: t**2 - 1,
         y_of_t=lambda t: 2 * t + 3,
     )
 
-    print("Chapter 1.1 and 1.2: Parametric Equations")
+    print("Parametric Equations")
     print()
     print("Example curve: x = t^2 - 1, y = 2t + 3")
     print()
@@ -35,5 +43,23 @@ def run_chapter_1_1_demo() -> None:
     )
 
 
+def run_polar_demo() -> None:
+    """Show the polar-coordinate tools on a sample curve."""
+    curve = make_polar_curve(lambda theta: 1 + theta)
+
+    print("Polar Coordinates")
+    print()
+    print("Example curve: r = 1 + theta")
+    print()
+    print(polar_to_cartesian_table(curve.sample(start=0, stop=2, steps=4)))
+    print()
+    parametric_curve = curve.to_parametric_curve()
+    print(
+        "Equivalent parametric point at theta = 1: "
+        f"({parametric_curve.point_at(1).x:.6g}, "
+        f"{parametric_curve.point_at(1).y:.6g})"
+    )
+
+
 if __name__ == "__main__":
-    run_chapter_1_1_demo()
+    run_demo()
