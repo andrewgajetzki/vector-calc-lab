@@ -1,16 +1,27 @@
-# This is a sample Python script.
+"""Study helpers for Calculus 3 topics."""
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+from __future__ import annotations
 
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+from src.parametric_equations import make_curve, points_table
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
+def run_chapter_1_1_demo() -> None:
+    """Show the Chapter 1.1 parametric-equation tools on a sample curve."""
+    curve = make_curve(
+        x_of_t=lambda t: t**2 - 1,
+        y_of_t=lambda t: 2 * t + 3,
+    )
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    print("Chapter 1.1: Parametric Equations")
+    print()
+    print("Example curve: x = t^2 - 1, y = 2t + 3")
+    print()
+    print(points_table(curve.sample(start=-2, stop=2, steps=4)))
+    print()
+    print(f"Slope dy/dx at t = 2: {curve.slope(2):.6g}")
+    print(f"Speed at t = 2: {curve.speed(2):.6g}")
+    print(f"Approximate arc length from t = -2 to t = 2: {curve.arc_length(-2, 2):.6g}")
+
+
+if __name__ == "__main__":
+    run_chapter_1_1_demo()
