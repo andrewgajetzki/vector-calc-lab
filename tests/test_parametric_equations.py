@@ -34,7 +34,38 @@ def test_slope_uses_dy_dt_over_dx_dt():
 def test_second_derivative_uses_parametric_formula():
     curve = make_curve(lambda t: t**2, lambda t: t**3)
 
-    assert curve.second_derivative(2) == pytest.approx(0.75, rel=1e-4)
+    assert curve.second_derivative(2) == pytest.approx(0.375, rel=1e-4)
+
+
+def test_tangent_and_normal_lines_at_parameter_value():
+    curve = make_curve(lambda t: t**2, lambda t: t**3)
+
+    tangent = curve.tangent_line(2)
+    normal = curve.normal_line(2)
+
+    assert tangent.point.x == 4
+    assert tangent.point.y == 8
+    assert tangent.slope == pytest.approx(3)
+    assert tangent.as_text() == "y - 8 = 3(x - 4)"
+    assert normal.slope == pytest.approx(-1 / 3)
+    assert normal.as_text() == "y - 8 = -0.333333(x - 4)"
+
+
+def test_normal_line_is_vertical_when_tangent_is_horizontal():
+    curve = make_curve(lambda t: t, lambda t: t**2)
+
+    normal = curve.normal_line(0)
+
+    assert normal.slope is None
+    assert normal.as_text() == "x = 0"
+
+
+def test_concavity_uses_second_derivative_sign():
+    concave_up_curve = make_curve(lambda t: t, lambda t: t**2)
+    concave_down_curve = make_curve(lambda t: t, lambda t: -(t**2))
+
+    assert concave_up_curve.concavity(1) == "concave up"
+    assert concave_down_curve.concavity(1) == "concave down"
 
 
 def test_speed_and_arc_length_for_unit_circle_quarter_arc():
@@ -42,6 +73,21 @@ def test_speed_and_arc_length_for_unit_circle_quarter_arc():
 
     assert curve.speed(0) == pytest.approx(1)
     assert curve.arc_length(0, math.pi / 2) == pytest.approx(math.pi / 2, rel=1e-6)
+
+
+def test_signed_area_under_parametric_curve():
+    curve = make_curve(lambda t: t, lambda t: t**2)
+
+    assert curve.signed_area_under_curve(0, 1) == pytest.approx(1 / 3, rel=1e-6)
+
+
+def test_surface_area_about_coordinate_axes():
+    horizontal_segment = make_curve(lambda t: t, lambda t: 2)
+    vertical_segment = make_curve(lambda t: 2, lambda t: t)
+
+    assert horizontal_segment.surface_area_about_x_axis(0, 3) == pytest.approx(12 * math.pi)
+    assert horizontal_segment.surface_area_about_x_axis(3, 0) == pytest.approx(12 * math.pi)
+    assert vertical_segment.surface_area_about_y_axis(0, 3) == pytest.approx(12 * math.pi)
 
 
 def test_undefined_slope_raises_value_error():

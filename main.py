@@ -12,15 +12,27 @@ def run_chapter_1_1_demo() -> None:
         y_of_t=lambda t: 2 * t + 3,
     )
 
-    print("Chapter 1.1: Parametric Equations")
+    print("Chapter 1.1 and 1.2: Parametric Equations")
     print()
     print("Example curve: x = t^2 - 1, y = 2t + 3")
     print()
     print(points_table(curve.sample(start=-2, stop=2, steps=4)))
     print()
     print(f"Slope dy/dx at t = 2: {curve.slope(2):.6g}")
+    print(f"Second derivative d2y/dx2 at t = 2: {curve.second_derivative(2):.6g}")
+    print(f"Tangent line at t = 2: {curve.tangent_line(2).as_text()}")
+    print(f"Normal line at t = 2: {curve.normal_line(2).as_text()}")
+    print(f"Concavity at t = 2: {curve.concavity(2)}")
     print(f"Speed at t = 2: {curve.speed(2):.6g}")
+    print(
+        "Signed area under the curve from t = -2 to t = 2: "
+        f"{curve.signed_area_under_curve(-2, 2):.6g}"
+    )
     print(f"Approximate arc length from t = -2 to t = 2: {curve.arc_length(-2, 2):.6g}")
+    print(
+        "Approximate surface area about the x-axis from t = 0 to t = 2: "
+        f"{curve.surface_area_about_x_axis(0, 2):.6g}"
+    )
 
 
 if __name__ == "__main__":

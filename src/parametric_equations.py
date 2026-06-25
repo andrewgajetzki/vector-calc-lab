@@ -1,4 +1,4 @@
-"""Utilities for Chapter 1.1: parametric equations."""
+"""Utilities for Chapter 1.1 and 1.2: parametric equations."""
 
 from __future__ import annotations
 
@@ -17,6 +17,22 @@ class ParametricPoint:
     t: float
     x: float
     y: float
+
+
+@dataclass(frozen=True)
+class Line:
+    """A line attached to a point on a parametric curve."""
+
+    point: ParametricPoint
+    slope: float | None
+
+    def as_text(self) -> str:
+        if self.slope is None:
+            return f"x = {_format_number(self.point.x)}"
+        return (
+            f"y - {_format_number(self.point.y)} = "
+            f"{_format_number(self.slope)}(x - {_format_number(self.point.x)})"
+        )
 
 
 @dataclass(frozen=True)
@@ -61,20 +77,68 @@ class ParametricCurve:
         slope_rate = _central_difference(lambda value: self.slope(value, h), t, h)
         return slope_rate / dx
 
+    def tangent_line(self, t: float, h: float = 1e-5) -> Line:
+        """Return the tangent line at parameter value ``t``."""
+        return Line(point=self.point_at(t), slope=self.slope(t, h))
+
+    def normal_line(self, t: float, h: float = 1e-5) -> Line:
+        """Return the normal line at parameter value ``t``."""
+        tangent_slope = self.slope(t, h)
+        if math.isclose(tangent_slope, 0.0, abs_tol=1e-12):
+            return Line(point=self.point_at(t), slope=None)
+        return Line(point=self.point_at(t), slope=-1 / tangent_slope)
+
+    def concavity(self, t: float, h: float = 1e-5) -> str:
+        """Classify concavity from the sign of ``d2y/dx2`` at ``t``."""
+        value = self.second_derivative(t, h)
+        if math.isclose(value, 0.0, abs_tol=1e-8):
+            return "neither concave up nor concave down"
+        if value > 0:
+            return "concave up"
+        return "concave down"
+
     def speed(self, t: float, h: float = 1e-5) -> float:
         """Approximate speed ``sqrt((dx/dt)^2 + (dy/dt)^2)`` at ``t``."""
         return math.hypot(self.dx_dt(t, h), self.dy_dt(t, h))
 
     def arc_length(self, start: float, stop: float, segments: int = 1000) -> float:
         """Approximate arc length over ``start <= t <= stop`` with the trapezoid rule."""
-        if segments < 1:
-            raise ValueError("segments must be at least 1.")
+        return abs(_trapezoid_rule(self.speed, start, stop, segments))
 
-        step_size = (stop - start) / segments
-        total = 0.5 * (self.speed(start) + self.speed(stop))
-        for index in range(1, segments):
-            total += self.speed(start + index * step_size)
-        return abs(total * step_size)
+    def signed_area_under_curve(self, start: float, stop: float, segments: int = 1000) -> float:
+        """Approximate ``integral y dx`` over the parameter interval."""
+        return _trapezoid_rule(
+            lambda t: self.y_of_t(t) * self.dx_dt(t),
+            start,
+            stop,
+            segments,
+        )
+
+    def surface_area_about_x_axis(
+        self, start: float, stop: float, segments: int = 1000
+    ) -> float:
+        """Approximate surface area from rotating the curve about the x-axis."""
+        return 2 * math.pi * abs(
+            _trapezoid_rule(
+                lambda t: abs(self.y_of_t(t)) * self.speed(t),
+                start,
+                stop,
+                segments,
+            )
+        )
+
+    def surface_area_about_y_axis(
+        self, start: float, stop: float, segments: int = 1000
+    ) -> float:
+        """Approximate surface area from rotating the curve about the y-axis."""
+        return 2 * math.pi * abs(
+            _trapezoid_rule(
+                lambda t: abs(self.x_of_t(t)) * self.speed(t),
+                start,
+                stop,
+                segments,
+            )
+        )
 
 
 def make_curve(x_of_t: NumberFunction, y_of_t: NumberFunction) -> ParametricCurve:
@@ -96,6 +160,22 @@ def _central_difference(function: NumberFunction, t: float, h: float) -> float:
     if h <= 0:
         raise ValueError("h must be positive.")
     return (function(t + h) - function(t - h)) / (2 * h)
+
+
+def _trapezoid_rule(
+    function: NumberFunction,
+    start: float,
+    stop: float,
+    segments: int,
+) -> float:
+    if segments < 1:
+        raise ValueError("segments must be at least 1.")
+
+    step_size = (stop - start) / segments
+    total = 0.5 * (function(start) + function(stop))
+    for index in range(1, segments):
+        total += function(start + index * step_size)
+    return total * step_size
 
 
 def _format_number(value: float) -> str:

@@ -1,8 +1,8 @@
-# calculus-3-tools
+# vector-calc-lab
 
-A small Python project for studying Calculus 3 topics.
+A small Python project for studying vector calculus topics.
 
-## Chapter 1.1: Parametric Equations
+## Parametric Equations
 
 The parametric-equation tools work with curves of the form:
 
@@ -10,8 +10,8 @@ The parametric-equation tools work with curves of the form:
 x = x(t), y = y(t)
 ```
 
-They can evaluate points, build a point table, estimate `dy/dx`, estimate `d2y/dx2`,
-compute speed, and approximate arc length.
+They can evaluate points, build a point table, and handle the usual calculus
+operations for parametric curves.
 
 ```python
 from src.parametric_equations import make_curve, points_table
@@ -19,9 +19,28 @@ from src.parametric_equations import make_curve, points_table
 curve = make_curve(lambda t: t**2 - 1, lambda t: 2 * t + 3)
 
 print(points_table(curve.sample(-2, 2, steps=4)))
+print(curve.dx_dt(2))
+print(curve.dy_dt(2))
 print(curve.slope(2))
+print(curve.second_derivative(2))
+print(curve.tangent_line(2).as_text())
+print(curve.normal_line(2).as_text())
+print(curve.concavity(2))
+print(curve.speed(2))
 print(curve.arc_length(-2, 2))
+print(curve.signed_area_under_curve(-2, 2))
+print(curve.surface_area_about_x_axis(0, 2))
+print(curve.surface_area_about_y_axis(0, 2))
 ```
+
+Formulas supported:
+
+- `dy/dx = (dy/dt) / (dx/dt)`
+- `d2y/dx2 = d/dt(dy/dx) / (dx/dt)`
+- arc length `integral sqrt((dx/dt)^2 + (dy/dt)^2) dt`
+- signed area `integral y(t) * dx/dt dt`
+- surface area about the x-axis `2*pi*integral |y(t)| ds`
+- surface area about the y-axis `2*pi*integral |x(t)| ds`
 
 You can also run the built-in demo:
 
@@ -39,7 +58,7 @@ a*y'' + b*y' + c*y = 0
 
 It builds the characteristic equation, classifies the roots, and returns a human-readable general solution.
 
-## Example
+Example:
 
 ```python
 from src.ode_solver import solve_homogeneous_second_order
