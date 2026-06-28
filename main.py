@@ -59,6 +59,15 @@ def run_polar_demo() -> None:
         f"({parametric_curve.point_at(1).x:.6g}, "
         f"{parametric_curve.point_at(1).y:.6g})"
     )
+    print(f"dr/dtheta at theta = 1: {curve.dr_dtheta(1):.6g}")
+    print(
+        "Approximate polar area from theta = 0 to theta = 2: "
+        f"{curve.area(0, 2):.6g}"
+    )
+    print(
+        "Approximate polar arc length from theta = 0 to theta = 2: "
+        f"{curve.arc_length(0, 2):.6g}"
+    )
 
 
 if __name__ == "__main__":

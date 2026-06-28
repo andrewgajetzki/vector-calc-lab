@@ -67,6 +67,33 @@ def test_polar_curve_evaluates_and_samples_points():
     assert [point.r for point in points] == pytest.approx([2, 1, 0])
 
 
+def test_polar_curve_approximates_radius_derivative():
+    curve = make_polar_curve(lambda theta: theta**2)
+
+    assert curve.dr_dtheta(3) == pytest.approx(6)
+
+
+def test_polar_curve_area_uses_half_integral_of_radius_squared():
+    circle = make_polar_curve(lambda theta: 2)
+    spiral = make_polar_curve(lambda theta: theta)
+
+    assert circle.area(0, math.pi / 2) == pytest.approx(math.pi)
+    assert circle.area(math.pi / 2, 0) == pytest.approx(math.pi)
+    assert spiral.area(0, 1) == pytest.approx(1 / 6, rel=1e-6)
+
+
+def test_polar_curve_arc_length_uses_polar_formula():
+    circle = make_polar_curve(lambda theta: 2)
+    exponential_spiral = make_polar_curve(math.exp)
+
+    assert circle.arc_length(0, math.pi / 2) == pytest.approx(math.pi)
+    assert circle.arc_length(math.pi / 2, 0) == pytest.approx(math.pi)
+    assert exponential_spiral.arc_length(0, 1) == pytest.approx(
+        math.sqrt(2) * (math.e - 1),
+        rel=1e-6,
+    )
+
+
 def test_polar_curve_can_be_used_as_parametric_curve():
     polar_curve = make_polar_curve(lambda theta: 2)
     parametric_curve = polar_curve.to_parametric_curve()

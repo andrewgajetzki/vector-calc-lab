@@ -78,7 +78,10 @@ print(PolarPoint(2, math.pi / 6).equivalent())
 curve = make_polar_curve(lambda theta: 1 + math.cos(theta))
 
 print(polar_to_cartesian_table(curve.sample(0, math.pi, steps=4)))
-print(curve.to_parametric_curve().arc_length(0, math.pi))
+print(curve.dr_dtheta(math.pi / 2))
+print(curve.area(0, math.pi))
+print(curve.arc_length(0, math.pi))
+print(curve.to_parametric_curve().point_at(math.pi / 2))
 ```
 
 Formulas supported:
@@ -87,6 +90,9 @@ Formulas supported:
 - `y = r*sin(theta)`
 - `r = sqrt(x^2 + y^2)`
 - `theta = atan2(y, x)`
+- `dr/dtheta` by central difference
+- polar area `1/2*integral r(theta)^2 dtheta`
+- polar arc length `integral sqrt(r(theta)^2 + (dr/dtheta)^2) dtheta`
 - equivalent points `(r, theta + 2*pi*k)` and `(-r, theta + (2*k + 1)*pi)`
 
 ## Homogeneous Second-Order Linear ODEs
