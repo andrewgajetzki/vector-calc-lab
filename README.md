@@ -2,6 +2,54 @@
 
 A small Python project for studying vector calculus topics.
 
+## Vectors in the Plane and Space
+
+The vector tools work with vectors in the plane and in rectangular space.
+Plane vectors have the richest API because they are the most common starting
+point for this project.
+
+```python
+import math
+
+from src.vectors import Point2D, Vector2D, make_vector2d, make_vector3d
+
+start = Point2D(1, -2)
+end = Point2D(4, 2)
+displacement = start.vector_to(end)
+
+u = make_vector2d(3, 4)
+v = make_vector2d(-2, 1)
+
+print(displacement.as_text())
+print(u.magnitude())
+print(u.direction_angle())
+print(u.unit().as_text())
+print(u.dot(v))
+print(u.cross_z(v))
+print(u.angle_with(v))
+print(u.projection_onto(v).as_text())
+print(u.parallelogram_area_with(v))
+print(Vector2D.from_polar(2, math.pi / 2).as_text())
+
+space_i = make_vector3d(1, 0, 0)
+space_j = make_vector3d(0, 1, 0)
+print(space_i.cross(space_j).as_text())
+```
+
+Formulas supported:
+
+- magnitude in the plane `sqrt(x^2 + y^2)`
+- magnitude in space `sqrt(x^2 + y^2 + z^2)`
+- direction angle in the plane `atan2(y, x)`
+- unit vectors `v / |v|`
+- dot product and angle `cos(theta) = (u dot v) / (|u||v|)`
+- 2D cross-product z-component `u_x*v_y - u_y*v_x`
+- 3D cross product
+- scalar and vector projections
+- parallel and orthogonal checks
+- parallelogram and triangle areas from vector products
+- point-to-point vectors and distances
+
 ## Parametric Equations
 
 The parametric-equation tools work with curves of the form:

@@ -5,15 +5,47 @@ from __future__ import annotations
 from src.conic_sections import make_conic
 from src.parametric_equations import make_curve, points_table
 from src.polar_coordinates import make_polar_curve, polar_to_cartesian_table
+from src.vectors import Point2D, make_vector2d, make_vector3d
 
 
 def run_demo() -> None:
     """Show the available calculus helpers on sample curves."""
+    run_vector_demo()
+    print()
     run_parametric_demo()
     print()
     run_polar_demo()
     print()
     run_conic_demo()
+
+
+def run_vector_demo() -> None:
+    """Show the vector tools on sample plane and space vectors."""
+    start = Point2D(1, -2)
+    end = Point2D(4, 2)
+    displacement = start.vector_to(end)
+    first = make_vector2d(3, 4)
+    second = make_vector2d(-2, 1)
+
+    print("Vectors")
+    print()
+    print("Example plane vectors: u = <3, 4>, v = <-2, 1>")
+    print()
+    print(f"Vector from (1, -2) to (4, 2): {displacement.as_text()}")
+    print(f"|u|: {first.magnitude():.6g}")
+    print(f"Direction angle of u: {first.direction_angle():.6g} radians")
+    print(f"u dot v: {first.dot(second):.6g}")
+    print(f"2D cross z-component of u and v: {first.cross_z(second):.6g}")
+    print(f"Angle between u and v: {first.angle_with(second):.6g} radians")
+    print(f"Projection of u onto v: {first.projection_onto(second).as_text()}")
+    print(
+        "Parallelogram area spanned by u and v: "
+        f"{first.parallelogram_area_with(second):.6g}"
+    )
+    print(
+        "Space cross product <1, 0, 0> x <0, 1, 0>: "
+        f"{make_vector3d(1, 0, 0).cross(make_vector3d(0, 1, 0)).as_text()}"
+    )
 
 
 def run_parametric_demo() -> None:
