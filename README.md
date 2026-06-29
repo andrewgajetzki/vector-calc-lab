@@ -95,6 +95,47 @@ Formulas supported:
 - polar arc length `integral sqrt(r(theta)^2 + (dr/dtheta)^2) dtheta`
 - equivalent points `(r, theta + 2*pi*k)` and `(-r, theta + (2*k + 1)*pi)`
 
+## Conic Sections
+
+The conic-section tools work with implicit equations of the form:
+
+```text
+Ax^2 + Bxy + Cy^2 + Dx + Ey + F = 0
+```
+
+They can classify general conics, evaluate the implicit equation at a point,
+and compute standard-form features for axis-aligned conics.
+
+```python
+from src.conic_sections import classify_conic, make_conic
+
+circle = make_conic(x_squared=1, y_squared=1, x=-4, y=6, constant=-12)
+features = circle.standard_form()
+
+print(circle.classification())
+print(features.standard_form)
+print(features.center)
+print(features.radius)
+print(circle.evaluate(2, 2))
+
+ellipse_kind = classify_conic(9, 0, 4, -36, 24, -72)
+print(ellipse_kind)
+
+parabola = make_conic(x_squared=1, y=-4)
+print(parabola.standard_form().as_text())
+```
+
+Formulas supported:
+
+- general discriminant `B^2 - 4AC`
+- degenerate conic detection from the symmetric conic matrix determinant
+- circle, ellipse, parabola, and hyperbola classification
+- axis-aligned standard forms by completing the square
+- centers, radii, axes, vertices, foci, eccentricity, directrices, and asymptotes
+
+Rotated conics with a nonzero `Bxy` term can be classified, but standard-form
+feature extraction currently requires `B = 0`.
+
 ## Homogeneous Second-Order Linear ODEs
 
 The ODE solver works with equations of the form:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from src.conic_sections import make_conic
 from src.parametric_equations import make_curve, points_table
 from src.polar_coordinates import make_polar_curve, polar_to_cartesian_table
 
@@ -11,6 +12,8 @@ def run_demo() -> None:
     run_parametric_demo()
     print()
     run_polar_demo()
+    print()
+    run_conic_demo()
 
 
 def run_parametric_demo() -> None:
@@ -68,6 +71,22 @@ def run_polar_demo() -> None:
         "Approximate polar arc length from theta = 0 to theta = 2: "
         f"{curve.arc_length(0, 2):.6g}"
     )
+
+
+def run_conic_demo() -> None:
+    """Show the conic-section tools on sample equations."""
+    circle = make_conic(x_squared=1, y_squared=1, x=-4, y=6, constant=-12)
+    parabola = make_conic(x_squared=1, y=-4)
+
+    print("Conic Sections")
+    print()
+    print("Example equation: x^2 + y^2 - 4x + 6y - 12 = 0")
+    print()
+    print(circle.standard_form().as_text())
+    print()
+    print("Example equation: x^2 - 4y = 0")
+    print()
+    print(parabola.standard_form().as_text())
 
 
 if __name__ == "__main__":
