@@ -5,12 +5,20 @@ from __future__ import annotations
 from src.conic_sections import make_conic
 from src.parametric_equations import make_curve, points_table
 from src.polar_coordinates import make_polar_curve, polar_to_cartesian_table
-from src.vectors import Point2D, make_vector2d, make_vector3d
+from src.space_geometry import (
+    line_from_points,
+    make_line,
+    make_plane,
+    plane_from_scalar_equation,
+)
+from src.vectors import Point2D, Point3D, make_vector2d, make_vector3d
 
 
 def run_demo() -> None:
     """Show the available calculus helpers on sample curves."""
     run_vector_demo()
+    print()
+    run_space_geometry_demo()
     print()
     run_parametric_demo()
     print()
@@ -46,6 +54,33 @@ def run_vector_demo() -> None:
         "Space cross product <1, 0, 0> x <0, 1, 0>: "
         f"{make_vector3d(1, 0, 0).cross(make_vector3d(0, 1, 0)).as_text()}"
     )
+
+
+def run_space_geometry_demo() -> None:
+    """Show the line and plane tools in space."""
+    line = line_from_points(Point3D(1, 2, -1), Point3D(3, 1, 2))
+    plane = make_plane(Point3D(1, 2, -1), make_vector3d(2, -1, 3))
+    xy_plane = plane_from_scalar_equation(0, 0, 1, 0)
+    crossing_line = make_line(Point3D(1, 1, 1), make_vector3d(0, 0, -1))
+
+    print("Lines and Planes in Space")
+    print()
+    print("Example line through (1, 2, -1) and (3, 1, 2)")
+    print()
+    print(line.vector_equation())
+    print(line.parametric_equations())
+    print(line.symmetric_equations())
+    print()
+    print("Example plane through (1, 2, -1) with normal <2, -1, 3>")
+    print()
+    print(plane.scalar_equation())
+    print(plane.point_normal_form())
+    print(
+        "Distance from plane to (1, 2, 0): "
+        f"{plane.distance_to_point(Point3D(1, 2, 0)):.6g}"
+    )
+    intersection = crossing_line.intersection_with_plane(xy_plane)
+    print(f"Line-plane intersection with z = 0: {intersection}")
 
 
 def run_parametric_demo() -> None:

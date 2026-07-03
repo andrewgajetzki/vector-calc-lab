@@ -50,6 +50,56 @@ Formulas supported:
 - parallelogram and triangle areas from vector products
 - point-to-point vectors and distances
 
+## Lines and Planes in Space
+
+The space-geometry tools work with lines and planes in three dimensions using
+the existing `Point3D` and `Vector3D` types.
+
+```python
+import math
+
+from src.space_geometry import (
+    line_from_points,
+    make_line,
+    make_plane,
+    plane_from_scalar_equation,
+)
+from src.vectors import Point3D, make_vector3d
+
+line = line_from_points(Point3D(1, 2, -1), Point3D(3, 1, 2))
+
+print(line.vector_equation())
+print(line.parametric_equations())
+print(line.symmetric_equations())
+print(line.point_at(2))
+
+plane = make_plane(Point3D(1, 2, -1), make_vector3d(2, -1, 3))
+
+print(plane.scalar_equation())
+print(plane.point_normal_form())
+print(plane.distance_to_point(Point3D(1, 2, 0)))
+
+xy_plane = plane_from_scalar_equation(0, 0, 1, 0)
+crossing_line = make_line(Point3D(1, 1, 1), make_vector3d(0, 0, -1))
+
+print(crossing_line.intersection_with_plane(xy_plane))
+print(plane.angle_with_line(crossing_line))
+print(math.degrees(plane.angle_with_line(crossing_line)))
+```
+
+Formulas supported:
+
+- line vector equation `r(t) = r0 + t*v`
+- line parametric equations `x = x0 + at`, `y = y0 + bt`, `z = z0 + ct`
+- line symmetric equations when direction components are nonzero
+- plane scalar equation `Ax + By + Cz = D`
+- plane point-normal form `n dot ((x, y, z) - p0) = 0`
+- planes from three noncollinear points
+- point-to-line distance `|(p - p0) x v| / |v|`
+- point-to-plane distance `|Ax + By + Cz - D| / sqrt(A^2 + B^2 + C^2)`
+- angles between lines, planes, and line-plane pairs
+- line-plane intersections and plane-plane intersection lines
+
 ## Parametric Equations
 
 The parametric-equation tools work with curves of the form:
