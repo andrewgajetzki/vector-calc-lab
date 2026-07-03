@@ -5,6 +5,7 @@ from __future__ import annotations
 from src.conic_sections import make_conic
 from src.parametric_equations import make_curve, points_table
 from src.polar_coordinates import make_polar_curve, polar_to_cartesian_table
+from src.quadric_surfaces import make_quadric
 from src.space_geometry import (
     line_from_points,
     make_line,
@@ -25,6 +26,8 @@ def run_demo() -> None:
     run_polar_demo()
     print()
     run_conic_demo()
+    print()
+    run_quadric_demo()
 
 
 def run_vector_demo() -> None:
@@ -154,6 +157,22 @@ def run_conic_demo() -> None:
     print("Example equation: x^2 - 4y = 0")
     print()
     print(parabola.standard_form().as_text())
+
+
+def run_quadric_demo() -> None:
+    """Show the quadric-surface tools on sample equations."""
+    ellipsoid = make_quadric(x_squared=36, y_squared=16, z_squared=9, constant=-144)
+    paraboloid = make_quadric(x_squared=1 / 4, y_squared=1 / 9, z=-1)
+
+    print("Quadric Surfaces")
+    print()
+    print("Example equation: 36x^2 + 16y^2 + 9z^2 - 144 = 0")
+    print()
+    print(ellipsoid.standard_form().as_text())
+    print()
+    print("Example equation: x^2/4 + y^2/9 - z = 0")
+    print()
+    print(paraboloid.standard_form().as_text())
 
 
 if __name__ == "__main__":

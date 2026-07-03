@@ -100,6 +100,55 @@ Formulas supported:
 - angles between lines, planes, and line-plane pairs
 - line-plane intersections and plane-plane intersection lines
 
+## Quadric Surfaces
+
+The quadric-surface tools work with second-degree equations in three variables:
+
+```text
+Ax^2 + By^2 + Cz^2 + Dxy + Exz + Fyz + Gx + Hy + Iz + J = 0
+```
+
+They can evaluate implicit equations, detect rotated quadrics from mixed terms,
+and compute standard-form features for axis-aligned quadric surfaces.
+
+```python
+from src.quadric_surfaces import classify_quadric, make_quadric
+
+sphere = make_quadric(
+    x_squared=1,
+    y_squared=1,
+    z_squared=1,
+    x=-2,
+    y=4,
+    z=-6,
+    constant=10,
+)
+
+print(sphere.classification())
+print(sphere.standard_form().as_text())
+print(sphere.evaluate(1, -2, 5))
+
+ellipsoid_kind = classify_quadric(36, 16, 9, constant=-144)
+print(ellipsoid_kind)
+
+paraboloid = make_quadric(x_squared=1 / 4, y_squared=1 / 9, z=-1)
+print(paraboloid.standard_form().as_text())
+```
+
+Surface types supported:
+
+- sphere and ellipsoid
+- hyperboloid of one sheet
+- hyperboloid of two sheets
+- elliptic cone
+- elliptic paraboloid
+- hyperbolic paraboloid
+- circular, elliptic, hyperbolic, and parabolic cylinders
+
+Standard-form extraction completes the square for axis-aligned quadrics.
+Rotated quadrics with nonzero `Dxy`, `Exz`, or `Fyz` terms are detected, but
+their rotated standard forms are not expanded yet.
+
 ## Parametric Equations
 
 The parametric-equation tools work with curves of the form:
