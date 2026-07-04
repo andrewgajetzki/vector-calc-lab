@@ -14,6 +14,7 @@ from src.space_coordinates import (
     cylindrical_to_rectangular_table,
     spherical_to_rectangular_table,
 )
+from src.space_curves import make_space_curve, space_curve_points_table
 from src.space_geometry import (
     line_from_points,
     make_line,
@@ -26,6 +27,8 @@ from src.vectors import Point2D, Point3D, make_vector2d, make_vector3d
 def run_demo() -> None:
     """Show the available calculus helpers on sample curves."""
     run_vector_demo()
+    print()
+    run_space_curve_demo()
     print()
     run_space_geometry_demo()
     print()
@@ -67,6 +70,28 @@ def run_vector_demo() -> None:
         "Space cross product <1, 0, 0> x <0, 1, 0>: "
         f"{make_vector3d(1, 0, 0).cross(make_vector3d(0, 1, 0)).as_text()}"
     )
+
+
+def run_space_curve_demo() -> None:
+    """Show vector-valued function and space-curve tools."""
+    curve = make_space_curve(math.cos, math.sin, lambda t: t)
+
+    print("Vector-Valued Functions and Space Curves")
+    print()
+    print("Example curve: r(t) = <cos(t), sin(t), t>")
+    print()
+    print(space_curve_points_table(curve.sample(start=0, stop=math.pi / 2, steps=2)))
+    print()
+    print(f"Velocity at t = 0: {curve.velocity(0).as_text()}")
+    print(f"Acceleration at t = 0: {curve.acceleration(0).as_text()}")
+    print(f"Speed at t = 0: {curve.speed(0):.6g}")
+    print(f"Unit tangent at t = 0: {curve.unit_tangent(0).as_text()}")
+    print(f"Unit normal at t = 0: {curve.unit_normal(0).as_text()}")
+    print(f"Binormal at t = 0: {curve.binormal(0).as_text()}")
+    print(f"Curvature at t = 0: {curve.curvature(0):.6g}")
+    print(f"Torsion at t = 0: {curve.torsion(0):.6g}")
+    print(f"Arc length from t = 0 to t = pi: {curve.arc_length(0, math.pi):.6g}")
+    print(f"Tangent line at t = 0: {curve.tangent_line(0).parametric_equations()}")
 
 
 def run_space_geometry_demo() -> None:

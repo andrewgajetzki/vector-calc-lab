@@ -50,6 +50,52 @@ Formulas supported:
 - parallelogram and triangle areas from vector products
 - point-to-point vectors and distances
 
+## Vector-Valued Functions and Space Curves
+
+The space-curve tools work with vector-valued functions of the form:
+
+```text
+r(t) = <x(t), y(t), z(t)>
+```
+
+They can evaluate and sample space curves, approximate derivatives, build
+tangent lines, and compute the usual motion and Frenet-frame quantities.
+
+```python
+import math
+
+from src.space_curves import make_space_curve, space_curve_points_table
+
+curve = make_space_curve(math.cos, math.sin, lambda t: t)
+
+print(space_curve_points_table(curve.sample(0, math.pi / 2, steps=2)))
+print(curve.point_at(0).as_text())
+print(curve.position_vector(0).as_text())
+print(curve.velocity(0).as_text())
+print(curve.acceleration(0).as_text())
+print(curve.speed(0))
+print(curve.unit_tangent(0).as_text())
+print(curve.unit_normal(0).as_text())
+print(curve.binormal(0).as_text())
+print(curve.curvature(0))
+print(curve.torsion(0))
+print(curve.arc_length(0, math.pi))
+print(curve.tangent_line(0).parametric_equations())
+```
+
+Formulas supported:
+
+- velocity `r'(t)`
+- acceleration `r''(t)`
+- speed `|r'(t)|`
+- arc length `integral |r'(t)| dt`
+- unit tangent `T(t) = r'(t) / |r'(t)|`
+- curvature `kappa = |r'(t) x r''(t)| / |r'(t)|^3`
+- principal unit normal `N(t) = T'(t) / |T'(t)|`
+- binormal `B(t) = T(t) x N(t)`
+- torsion `tau = ((r'(t) x r''(t)) dot r'''(t)) / |r'(t) x r''(t)|^2`
+- tangential and normal acceleration components
+
 ## Lines and Planes in Space
 
 The space-geometry tools work with lines and planes in three dimensions using
