@@ -2,10 +2,18 @@
 
 from __future__ import annotations
 
+import math
+
 from src.conic_sections import make_conic
 from src.parametric_equations import make_curve, points_table
 from src.polar_coordinates import make_polar_curve, polar_to_cartesian_table
 from src.quadric_surfaces import make_quadric
+from src.space_coordinates import (
+    CylindricalPoint,
+    SphericalPoint,
+    cylindrical_to_rectangular_table,
+    spherical_to_rectangular_table,
+)
 from src.space_geometry import (
     line_from_points,
     make_line,
@@ -24,6 +32,8 @@ def run_demo() -> None:
     run_parametric_demo()
     print()
     run_polar_demo()
+    print()
+    run_space_coordinates_demo()
     print()
     run_conic_demo()
     print()
@@ -141,6 +151,29 @@ def run_polar_demo() -> None:
         "Approximate polar arc length from theta = 0 to theta = 2: "
         f"{curve.arc_length(0, 2):.6g}"
     )
+
+
+def run_space_coordinates_demo() -> None:
+    """Show cylindrical and spherical coordinate conversions."""
+    cylindrical = CylindricalPoint(2, math.pi / 2, 3)
+    spherical = SphericalPoint(4, math.pi / 2, math.pi / 3)
+
+    print("Cylindrical and Spherical Coordinates")
+    print()
+    print("Example cylindrical point: (r, theta, z) = (2, pi/2, 3)")
+    print()
+    print(cylindrical_to_rectangular_table([cylindrical]))
+    print(f"Cylindrical volume factor r: {cylindrical.volume_element_factor():.6g}")
+    print(f"As spherical coordinates: {cylindrical.to_spherical().as_text()}")
+    print()
+    print("Example spherical point: (rho, theta, phi) = (4, pi/2, pi/3)")
+    print()
+    print(spherical_to_rectangular_table([spherical]))
+    print(
+        "Spherical volume factor rho^2*sin(phi): "
+        f"{spherical.volume_element_factor():.6g}"
+    )
+    print(f"As cylindrical coordinates: {spherical.to_cylindrical().as_text()}")
 
 
 def run_conic_demo() -> None:

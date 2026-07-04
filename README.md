@@ -242,6 +242,56 @@ Formulas supported:
 - polar arc length `integral sqrt(r(theta)^2 + (dr/dtheta)^2) dtheta`
 - equivalent points `(r, theta + 2*pi*k)` and `(-r, theta + (2*k + 1)*pi)`
 
+## Cylindrical and Spherical Coordinates
+
+The space-coordinate tools convert between rectangular, cylindrical, and
+spherical coordinates. Spherical coordinates use the usual Calculus 3
+convention:
+
+```text
+rho = distance from the origin
+theta = angle in the xy-plane from the positive x-axis
+phi = angle down from the positive z-axis
+```
+
+```python
+import math
+
+from src.space_coordinates import (
+    CylindricalPoint,
+    SphericalPoint,
+    cylindrical_to_rectangular,
+    rectangular_to_cylindrical,
+    rectangular_to_spherical,
+    spherical_to_rectangular,
+)
+
+cylindrical = CylindricalPoint(2, math.pi / 2, 3)
+spherical = SphericalPoint(4, math.pi / 2, math.pi / 3)
+
+print(cylindrical.to_rectangular())
+print(cylindrical.to_spherical())
+print(cylindrical.volume_element_factor())
+
+print(spherical.to_rectangular())
+print(spherical.to_cylindrical())
+print(spherical.volume_element_factor())
+
+print(cylindrical_to_rectangular(2, math.pi / 2, 3))
+print(spherical_to_rectangular(4, math.pi / 2, math.pi / 3))
+print(rectangular_to_cylindrical(0, -3, 4))
+print(rectangular_to_spherical(0, 0, 3))
+```
+
+Formulas supported:
+
+- cylindrical to rectangular `x = r*cos(theta)`, `y = r*sin(theta)`, `z = z`
+- rectangular to cylindrical `r = sqrt(x^2 + y^2)`, `theta = atan2(y, x)`
+- spherical to rectangular `x = rho*sin(phi)*cos(theta)`, `y = rho*sin(phi)*sin(theta)`, `z = rho*cos(phi)`
+- rectangular to spherical `rho = sqrt(x^2 + y^2 + z^2)`, `phi = acos(z/rho)`
+- cylindrical volume element `dV = r dr dtheta dz`
+- spherical volume element `dV = rho^2*sin(phi) drho dtheta dphi`
+
 ## Conic Sections
 
 The conic-section tools work with implicit equations of the form:
