@@ -5,6 +5,7 @@ from __future__ import annotations
 import math
 
 from src.conic_sections import make_conic
+from src.multivariable_functions import make_function_2d, make_function_3d
 from src.parametric_equations import make_curve, points_table
 from src.polar_coordinates import make_polar_curve, polar_to_cartesian_table
 from src.quadric_surfaces import make_quadric
@@ -27,6 +28,8 @@ from src.vectors import Point2D, Point3D, make_vector2d, make_vector3d
 def run_demo() -> None:
     """Show the available calculus helpers on sample curves."""
     run_vector_demo()
+    print()
+    run_multivariable_function_demo()
     print()
     run_space_curve_demo()
     print()
@@ -69,6 +72,35 @@ def run_vector_demo() -> None:
     print(
         "Space cross product <1, 0, 0> x <0, 1, 0>: "
         f"{make_vector3d(1, 0, 0).cross(make_vector3d(0, 1, 0)).as_text()}"
+    )
+
+
+def run_multivariable_function_demo() -> None:
+    """Show differentiation tools for functions of several variables."""
+    surface = make_function_2d(lambda x, y: x**2 + 3 * x * y + y**2)
+    level_surface = make_function_3d(lambda x, y, z: x**2 + y**2 + z**2)
+
+    print("Functions of Several Variables")
+    print()
+    print("Example function: f(x, y) = x^2 + 3xy + y^2")
+    print()
+    print(f"f(1, 2): {surface.value_at(1, 2):.6g}")
+    print(f"fx(1, 2): {surface.partial_x(1, 2):.6g}")
+    print(f"fy(1, 2): {surface.partial_y(1, 2):.6g}")
+    print(f"Gradient at (1, 2): {surface.gradient(1, 2).as_text()}")
+    print(
+        "Directional derivative at (1, 2) toward <3, 4>: "
+        f"{surface.directional_derivative(1, 2, make_vector2d(3, 4)):.6g}"
+    )
+    tangent_plane = surface.tangent_plane(1, 2)
+    print(f"Tangent plane at (1, 2): {tangent_plane.as_text()}")
+    print(
+        "Linear approximation at (1.1, 1.9): "
+        f"{surface.linear_approximation(1, 2, 1.1, 1.9):.6g}"
+    )
+    print(
+        "Tangent plane to x^2 + y^2 + z^2 = 9 at (1, 2, 2): "
+        f"{level_surface.level_surface_tangent_plane(1, 2, 2).scalar_equation()}"
     )
 
 

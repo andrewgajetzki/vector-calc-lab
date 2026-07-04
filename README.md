@@ -50,6 +50,58 @@ Formulas supported:
 - parallelogram and triangle areas from vector products
 - point-to-point vectors and distances
 
+## Functions of Several Variables
+
+The multivariable-function tools work with scalar functions of two or three
+variables:
+
+```text
+f(x, y)
+f(x, y, z)
+```
+
+They approximate partial derivatives, gradients, directional derivatives,
+tangent planes, and linear approximations.
+
+```python
+from src.multivariable_functions import make_function_2d, make_function_3d
+from src.vectors import Vector2D, Vector3D
+
+surface = make_function_2d(lambda x, y: x**2 + 3 * x * y + y**2)
+
+print(surface.value_at(1, 2))
+print(surface.partial_x(1, 2))
+print(surface.partial_y(1, 2))
+print(surface.second_partial_xx(1, 2))
+print(surface.second_partial_xy(1, 2))
+print(surface.gradient(1, 2).as_text())
+print(surface.directional_derivative(1, 2, Vector2D(3, 4)))
+print(surface.tangent_plane(1, 2).as_text())
+print(surface.linear_approximation(1, 2, 1.1, 1.9))
+print(surface.differential(1, 2, dx=0.1, dy=-0.1))
+
+volume_function = make_function_3d(lambda x, y, z: x**2 + y * z + z**3)
+
+print(volume_function.partial_z(1, 2, 3))
+print(volume_function.gradient(1, 2, 3).as_text())
+print(volume_function.directional_derivative(1, 2, 3, Vector3D(0, 0, 2)))
+print(volume_function.linear_approximation(1, 2, 3, 1.1, 1.9, 3.05))
+
+level_surface = make_function_3d(lambda x, y, z: x**2 + y**2 + z**2)
+print(level_surface.level_surface_tangent_plane(1, 2, 2).scalar_equation())
+```
+
+Formulas supported:
+
+- first partial derivatives `fx`, `fy`, and `fz`
+- second partial derivatives and Hessian matrices
+- gradient vectors `grad f`
+- directional derivatives `grad f dot u`
+- tangent planes to graphs `z = f(x, y)`
+- tangent planes to level surfaces `F(x, y, z) = c`
+- linear approximation and differentials
+- second-derivative critical point test for `f(x, y)`
+
 ## Vector-Valued Functions and Space Curves
 
 The space-curve tools work with vector-valued functions of the form:
