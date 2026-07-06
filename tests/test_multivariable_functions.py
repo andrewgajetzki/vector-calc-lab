@@ -1,3 +1,5 @@
+import math
+
 import pytest
 
 from src.multivariable_functions import make_function_2d, make_function_3d
@@ -46,6 +48,41 @@ def test_function_2d_second_partials_hessian_and_critical_points():
     assert maximum.classify_critical_point(0, 0) == "local maximum"
     assert saddle.classify_critical_point(0, 0) == "saddle point"
     assert inconclusive.classify_critical_point(0, 0) == "inconclusive"
+
+
+def test_function_2d_finds_critical_points_and_rectangle_extrema():
+    function = make_function_2d(lambda x, y: (x - 1) ** 2 + (y + 2) ** 2)
+
+    critical_points = function.find_critical_points((-3, 3), (-4, 2))
+    extrema = function.absolute_extrema_on_rectangle((-1, 3), (-3, 1))
+
+    assert len(critical_points) == 1
+    critical_point = critical_points[0]
+    assert critical_point.point.x == pytest.approx(1)
+    assert critical_point.point.y == pytest.approx(-2)
+    assert critical_point.value == pytest.approx(0)
+    assert critical_point.classification == "local minimum"
+    assert extrema.minimum.value == pytest.approx(0)
+    assert extrema.maximum.value == pytest.approx(13)
+
+
+def test_function_2d_lagrange_extrema_for_circle_constraint():
+    function = make_function_2d(lambda x, y: x + y)
+
+    extrema = function.lagrange_extrema(
+        lambda x, y: x**2 + y**2 - 1,
+        (-1.2, 1.2),
+        (-1.2, 1.2),
+    )
+
+    coordinate = math.sqrt(0.5)
+    assert len(extrema.candidates) == 2
+    assert extrema.minimum.value == pytest.approx(-math.sqrt(2), rel=1e-5)
+    assert extrema.minimum.point.x == pytest.approx(-coordinate, rel=1e-5)
+    assert extrema.minimum.point.y == pytest.approx(-coordinate, rel=1e-5)
+    assert extrema.maximum.value == pytest.approx(math.sqrt(2), rel=1e-5)
+    assert extrema.maximum.point.x == pytest.approx(coordinate, rel=1e-5)
+    assert extrema.maximum.point.y == pytest.approx(coordinate, rel=1e-5)
 
 
 def test_function_2d_directional_derivative_tangent_plane_and_linearization():
@@ -150,6 +187,47 @@ def test_function_3d_directional_derivative_linearization_and_differential():
         35.35
     )
     assert function.differential(1, 2, 3, 0.1, -0.1, 0.05) == pytest.approx(1.35)
+
+
+def test_function_3d_classifies_and_finds_critical_points():
+    minimum = make_function_3d(lambda x, y, z: (x - 1) ** 2 + (y + 1) ** 2 + z**2)
+    maximum = make_function_3d(lambda x, y, z: -(x**2) - y**2 - z**2)
+    saddle = make_function_3d(lambda x, y, z: x**2 + y**2 - z**2)
+
+    critical_points = minimum.find_critical_points((-2, 2), (-2, 2), (-1, 1))
+
+    assert minimum.classify_critical_point(1, -1, 0) == "local minimum"
+    assert maximum.classify_critical_point(0, 0, 0) == "local maximum"
+    assert saddle.classify_critical_point(0, 0, 0) == "saddle point"
+    assert len(critical_points) == 1
+    assert critical_points[0].point.x == pytest.approx(1)
+    assert critical_points[0].point.y == pytest.approx(-1)
+    assert critical_points[0].point.z == pytest.approx(0)
+    assert critical_points[0].classification == "local minimum"
+
+
+def test_function_3d_box_extrema_and_lagrange_extrema():
+    box_function = make_function_3d(
+        lambda x, y, z: (x - 1) ** 2 + (y + 1) ** 2 + (z - 0.5) ** 2
+    )
+    sphere_function = make_function_3d(lambda x, y, z: x + y + z)
+
+    box_extrema = box_function.absolute_extrema_on_box((0, 2), (-2, 0), (0, 1))
+    constrained_extrema = sphere_function.lagrange_extrema(
+        lambda x, y, z: x**2 + y**2 + z**2 - 1,
+        (-1.2, 1.2),
+        (-1.2, 1.2),
+        (-1.2, 1.2),
+    )
+
+    coordinate = 1 / math.sqrt(3)
+    assert box_extrema.minimum.value == pytest.approx(0)
+    assert box_extrema.maximum.value == pytest.approx(2.25)
+    assert len(constrained_extrema.candidates) == 2
+    assert constrained_extrema.minimum.value == pytest.approx(-math.sqrt(3), rel=1e-5)
+    assert constrained_extrema.minimum.point.x == pytest.approx(-coordinate, rel=1e-5)
+    assert constrained_extrema.maximum.value == pytest.approx(math.sqrt(3), rel=1e-5)
+    assert constrained_extrema.maximum.point.x == pytest.approx(coordinate, rel=1e-5)
 
 
 def test_function_3d_chain_rule_for_one_parameter_path():

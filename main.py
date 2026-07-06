@@ -78,6 +78,8 @@ def run_vector_demo() -> None:
 def run_multivariable_function_demo() -> None:
     """Show differentiation tools for functions of several variables."""
     surface = make_function_2d(lambda x, y: x**2 + 3 * x * y + y**2)
+    extrema_surface = make_function_2d(lambda x, y: (x - 1) ** 2 + (y + 2) ** 2)
+    constrained_surface = make_function_2d(lambda x, y: x + y)
     origin_surface = make_function_2d(lambda x, y: x**2 + y**2)
     path_dependent = make_function_2d(
         lambda x, y: 0 if x == 0 and y == 0 else x * y / (x**2 + y**2)
@@ -116,6 +118,16 @@ def run_multivariable_function_demo() -> None:
         "Linear approximation at (1.1, 1.9): "
         f"{surface.linear_approximation(1, 2, 1.1, 1.9):.6g}"
     )
+    critical_point = extrema_surface.find_critical_points((-3, 3), (-4, 2))[0]
+    rectangle_extrema = extrema_surface.absolute_extrema_on_rectangle((-1, 3), (-3, 1))
+    constrained_extrema = constrained_surface.lagrange_extrema(
+        lambda x, y: x**2 + y**2 - 1,
+        (-1.2, 1.2),
+        (-1.2, 1.2),
+    )
+    print(f"Critical point search: {critical_point.as_text()}")
+    print(f"Rectangle minimum estimate: {rectangle_extrema.minimum.as_text()}")
+    print(f"Lagrange maximum on unit circle: {constrained_extrema.maximum.as_text()}")
     print(
         "Limit of x^2 + y^2 at (0, 0): "
         f"{origin_surface.limit_at(0, 0).as_text()}"

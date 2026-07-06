@@ -62,7 +62,8 @@ f(x, y, z)
 
 They approximate multivariable limits, continuity, partial derivatives,
 gradients, directional derivatives, chain-rule derivatives, tangent planes, and
-linear approximations.
+linear approximations. They also estimate local, absolute, and constrained
+extrema numerically.
 
 ```python
 from src.multivariable_functions import make_function_2d, make_function_3d
@@ -89,6 +90,24 @@ print(
 print(surface.tangent_plane(1, 2).as_text())
 print(surface.linear_approximation(1, 2, 1.1, 1.9))
 print(surface.differential(1, 2, dx=0.1, dy=-0.1))
+
+extrema_surface = make_function_2d(lambda x, y: (x - 1)**2 + (y + 2)**2)
+print(extrema_surface.find_critical_points((-3, 3), (-4, 2))[0].as_text())
+print(
+    extrema_surface.absolute_extrema_on_rectangle(
+        (-1, 3),
+        (-3, 1),
+    ).minimum.as_text()
+)
+
+constrained = make_function_2d(lambda x, y: x + y)
+print(
+    constrained.lagrange_extrema(
+        lambda x, y: x**2 + y**2 - 1,
+        (-1.2, 1.2),
+        (-1.2, 1.2),
+    ).maximum.as_text()
+)
 
 origin_surface = make_function_2d(lambda x, y: x**2 + y**2)
 print(origin_surface.limit_at(0, 0).as_text())
@@ -117,6 +136,16 @@ print(volume_function.linear_approximation(1, 2, 3, 1.1, 1.9, 3.05))
 print(volume_function.limit_at(1, 2, 3).as_text())
 print(volume_function.is_continuous_at(1, 2, 3))
 
+space_extrema = make_function_3d(lambda x, y, z: x**2 + y**2 + z**2)
+print(space_extrema.classify_critical_point(0, 0, 0))
+print(
+    space_extrema.absolute_extrema_on_box(
+        (-1, 1),
+        (-1, 1),
+        (-1, 1),
+    ).minimum.as_text()
+)
+
 level_surface = make_function_3d(lambda x, y, z: x**2 + y**2 + z**2)
 print(level_surface.level_surface_tangent_plane(1, 2, 2).scalar_equation())
 ```
@@ -135,8 +164,13 @@ Formulas supported:
 - tangent planes to level surfaces `F(x, y, z) = c`
 - linear approximation and differentials
 - second-derivative critical point test for `f(x, y)`
+- Hessian eigenvalue critical point classification for `f(x, y, z)`
+- numerical critical point searches over rectangles and boxes
+- absolute extrema estimates over rectangles and boxes
+- Lagrange-multiplier extrema for one equality constraint
 
-Limit and continuity checks provide numerical evidence, not symbolic proofs.
+Limit, continuity, critical point, and extrema searches provide numerical
+evidence, not symbolic proofs.
 
 ## Vector-Valued Functions and Space Curves
 

@@ -7,7 +7,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 from src.space_geometry import Plane3D
-from src.vectors import Point3D, Vector2D, Vector3D
+from src.vectors import Point2D, Point3D, Vector2D, Vector3D
 
 
 NumberFunction2D = Callable[[float, float], float]
@@ -32,6 +32,144 @@ class LimitEstimate:
             f"({status}; spread={_format_number(self.spread)}, "
             f"drift={_format_number(self.drift)})"
         )
+
+
+@dataclass(frozen=True)
+class FunctionPoint2D:
+    """A sampled point on ``z = f(x, y)``."""
+
+    point: Point2D
+    value: float
+
+    def as_text(self) -> str:
+        """Return a compact human-readable summary."""
+        return (
+            f"f({_format_number(self.point.x)}, {_format_number(self.point.y)}) = "
+            f"{_format_number(self.value)}"
+        )
+
+
+@dataclass(frozen=True)
+class FunctionPoint3D:
+    """A sampled point for ``f(x, y, z)``."""
+
+    point: Point3D
+    value: float
+
+    def as_text(self) -> str:
+        """Return a compact human-readable summary."""
+        return (
+            f"f({_format_number(self.point.x)}, {_format_number(self.point.y)}, "
+            f"{_format_number(self.point.z)}) = {_format_number(self.value)}"
+        )
+
+
+@dataclass(frozen=True)
+class CriticalPoint2D:
+    """A numerical critical point estimate for ``f(x, y)``."""
+
+    point: Point2D
+    value: float
+    classification: str
+    gradient_magnitude: float
+
+    def as_text(self) -> str:
+        """Return a compact human-readable summary."""
+        return (
+            f"{self.classification}: "
+            f"f({_format_number(self.point.x)}, {_format_number(self.point.y)}) = "
+            f"{_format_number(self.value)}"
+        )
+
+
+@dataclass(frozen=True)
+class CriticalPoint3D:
+    """A numerical critical point estimate for ``f(x, y, z)``."""
+
+    point: Point3D
+    value: float
+    classification: str
+    gradient_magnitude: float
+
+    def as_text(self) -> str:
+        """Return a compact human-readable summary."""
+        return (
+            f"{self.classification}: "
+            f"f({_format_number(self.point.x)}, {_format_number(self.point.y)}, "
+            f"{_format_number(self.point.z)}) = {_format_number(self.value)}"
+        )
+
+
+@dataclass(frozen=True)
+class ExtremaEstimate2D:
+    """Numerical absolute extrema estimates over a rectangular region."""
+
+    minimum: FunctionPoint2D
+    maximum: FunctionPoint2D
+    candidates: tuple[FunctionPoint2D, ...]
+
+
+@dataclass(frozen=True)
+class ExtremaEstimate3D:
+    """Numerical absolute extrema estimates over a rectangular box."""
+
+    minimum: FunctionPoint3D
+    maximum: FunctionPoint3D
+    candidates: tuple[FunctionPoint3D, ...]
+
+
+@dataclass(frozen=True)
+class LagrangePoint2D:
+    """A Lagrange-multiplier candidate for ``f(x, y)`` with one constraint."""
+
+    point: Point2D
+    value: float
+    multiplier: float
+    constraint_value: float
+
+    def as_text(self) -> str:
+        """Return a compact human-readable summary."""
+        return (
+            f"f({_format_number(self.point.x)}, {_format_number(self.point.y)}) = "
+            f"{_format_number(self.value)}, lambda = "
+            f"{_format_number(self.multiplier)}"
+        )
+
+
+@dataclass(frozen=True)
+class LagrangePoint3D:
+    """A Lagrange-multiplier candidate for ``f(x, y, z)`` with one constraint."""
+
+    point: Point3D
+    value: float
+    multiplier: float
+    constraint_value: float
+
+    def as_text(self) -> str:
+        """Return a compact human-readable summary."""
+        return (
+            f"f({_format_number(self.point.x)}, {_format_number(self.point.y)}, "
+            f"{_format_number(self.point.z)}) = {_format_number(self.value)}, "
+            f"lambda = {_format_number(self.multiplier)}"
+        )
+
+
+@dataclass(frozen=True)
+class LagrangeExtrema2D:
+    """Numerical constrained extrema for one constraint in the plane."""
+
+    minimum: LagrangePoint2D
+    maximum: LagrangePoint2D
+    candidates: tuple[LagrangePoint2D, ...]
+
+
+@dataclass(frozen=True)
+class LagrangeExtrema3D:
+    """Numerical constrained extrema for one constraint in space."""
+
+    minimum: LagrangePoint3D
+    maximum: LagrangePoint3D
+    candidates: tuple[LagrangePoint3D, ...]
 
 
 @dataclass(frozen=True)
@@ -206,6 +344,158 @@ class ScalarFunction2D:
         if determinant < -1e-8:
             return "saddle point"
         return "inconclusive"
+
+    def critical_point(self, x: float, y: float, h: float = 1e-4) -> CriticalPoint2D:
+        """Return a critical-point estimate and second-derivative classification."""
+        gradient = self.gradient(x, y, h)
+        return CriticalPoint2D(
+            point=Point2D(x, y),
+            value=self.function(x, y),
+            classification=self.classify_critical_point(x, y, h),
+            gradient_magnitude=gradient.magnitude(),
+        )
+
+    def find_critical_points(
+        self,
+        x_bounds: tuple[float, float],
+        y_bounds: tuple[float, float],
+        grid_size: int = 7,
+        tolerance: float = 1e-5,
+        max_iterations: int = 30,
+        h: float = 1e-5,
+    ) -> tuple[CriticalPoint2D, ...]:
+        """Search a rectangle for numerical critical points."""
+        x_bounds = _validate_bounds(x_bounds, "x_bounds")
+        y_bounds = _validate_bounds(y_bounds, "y_bounds")
+        points: list[CriticalPoint2D] = []
+
+        for seed in _grid_2d(x_bounds, y_bounds, grid_size):
+            try:
+                x, y = _newton_solve(
+                    lambda values: self.gradient(values[0], values[1], h).components(),
+                    seed,
+                    tolerance,
+                    max_iterations,
+                    h,
+                )
+            except (ArithmeticError, ValueError, OverflowError, ZeroDivisionError):
+                continue
+
+            if not _within_bounds((x, y), (x_bounds, y_bounds), tolerance):
+                continue
+
+            gradient = self.gradient(x, y, h)
+            if gradient.magnitude() > tolerance * 10:
+                continue
+
+            point = CriticalPoint2D(
+                point=Point2D(x, y),
+                value=self.function(x, y),
+                classification=self.classify_critical_point(x, y),
+                gradient_magnitude=gradient.magnitude(),
+            )
+            if not _has_nearby_point_2d(point.point, points, tolerance * 10):
+                points.append(point)
+
+        return tuple(sorted(points, key=lambda item: (item.point.x, item.point.y)))
+
+    def absolute_extrema_on_rectangle(
+        self,
+        x_bounds: tuple[float, float],
+        y_bounds: tuple[float, float],
+        grid_size: int = 25,
+        tolerance: float = 1e-5,
+        h: float = 1e-5,
+    ) -> ExtremaEstimate2D:
+        """Estimate absolute extrema over a closed rectangular region."""
+        x_bounds = _validate_bounds(x_bounds, "x_bounds")
+        y_bounds = _validate_bounds(y_bounds, "y_bounds")
+        candidates = [
+            FunctionPoint2D(Point2D(x, y), self.function(x, y))
+            for x, y in _grid_2d(x_bounds, y_bounds, grid_size)
+        ]
+        candidates.extend(
+            FunctionPoint2D(point.point, point.value)
+            for point in self.find_critical_points(
+                x_bounds,
+                y_bounds,
+                grid_size=max(3, min(grid_size, 9)),
+                tolerance=tolerance,
+                h=h,
+            )
+        )
+        return ExtremaEstimate2D(
+            minimum=min(candidates, key=lambda item: item.value),
+            maximum=max(candidates, key=lambda item: item.value),
+            candidates=tuple(candidates),
+        )
+
+    def lagrange_extrema(
+        self,
+        constraint: NumberFunction2D,
+        x_bounds: tuple[float, float],
+        y_bounds: tuple[float, float],
+        grid_size: int = 7,
+        tolerance: float = 1e-5,
+        max_iterations: int = 40,
+        h: float = 1e-5,
+    ) -> LagrangeExtrema2D:
+        """Estimate constrained extrema using one Lagrange multiplier."""
+        x_bounds = _validate_bounds(x_bounds, "x_bounds")
+        y_bounds = _validate_bounds(y_bounds, "y_bounds")
+        candidates: list[LagrangePoint2D] = []
+
+        def system(values: tuple[float, ...]) -> tuple[float, ...]:
+            x, y, multiplier = values
+            function_gradient = self.gradient(x, y, h)
+            constraint_gradient = _gradient_2d(constraint, x, y, h)
+            return (
+                function_gradient.x - multiplier * constraint_gradient.x,
+                function_gradient.y - multiplier * constraint_gradient.y,
+                constraint(x, y),
+            )
+
+        for x, y in _grid_2d(x_bounds, y_bounds, grid_size):
+            for multiplier in (-1.0, 0.0, 1.0):
+                try:
+                    solution = _newton_solve(
+                        system,
+                        (x, y, multiplier),
+                        tolerance,
+                        max_iterations,
+                        h,
+                    )
+                except (ArithmeticError, ValueError, OverflowError, ZeroDivisionError):
+                    continue
+
+                candidate_x, candidate_y, candidate_multiplier = solution
+                constraint_value = constraint(candidate_x, candidate_y)
+                if not _within_bounds(
+                    (candidate_x, candidate_y),
+                    (x_bounds, y_bounds),
+                    tolerance,
+                ):
+                    continue
+                if abs(constraint_value) > tolerance * 10:
+                    continue
+
+                point = LagrangePoint2D(
+                    point=Point2D(candidate_x, candidate_y),
+                    value=self.function(candidate_x, candidate_y),
+                    multiplier=candidate_multiplier,
+                    constraint_value=constraint_value,
+                )
+                if not _has_nearby_lagrange_point_2d(point, candidates, tolerance * 10):
+                    candidates.append(point)
+
+        if not candidates:
+            raise ValueError("No Lagrange extrema candidates were found.")
+
+        return LagrangeExtrema2D(
+            minimum=min(candidates, key=lambda item: item.value),
+            maximum=max(candidates, key=lambda item: item.value),
+            candidates=tuple(sorted(candidates, key=lambda item: item.value)),
+        )
 
     def limit_at(
         self,
@@ -434,6 +724,208 @@ class ScalarFunction3D:
             (xz, yz, self.second_partial_zz(x, y, z, h)),
         )
 
+    def classify_critical_point(
+        self,
+        x: float,
+        y: float,
+        z: float,
+        h: float = 1e-4,
+    ) -> str:
+        """Classify a critical point using Hessian eigenvalue signs."""
+        eigenvalues = _symmetric_eigenvalues(self.hessian(x, y, z, h))
+        if all(value > 1e-8 for value in eigenvalues):
+            return "local minimum"
+        if all(value < -1e-8 for value in eigenvalues):
+            return "local maximum"
+        if any(value > 1e-8 for value in eigenvalues) and any(
+            value < -1e-8 for value in eigenvalues
+        ):
+            return "saddle point"
+        return "inconclusive"
+
+    def critical_point(
+        self,
+        x: float,
+        y: float,
+        z: float,
+        h: float = 1e-4,
+    ) -> CriticalPoint3D:
+        """Return a critical-point estimate and Hessian classification."""
+        gradient = self.gradient(x, y, z, h)
+        return CriticalPoint3D(
+            point=Point3D(x, y, z),
+            value=self.function(x, y, z),
+            classification=self.classify_critical_point(x, y, z, h),
+            gradient_magnitude=gradient.magnitude(),
+        )
+
+    def find_critical_points(
+        self,
+        x_bounds: tuple[float, float],
+        y_bounds: tuple[float, float],
+        z_bounds: tuple[float, float],
+        grid_size: int = 5,
+        tolerance: float = 1e-5,
+        max_iterations: int = 30,
+        h: float = 1e-5,
+    ) -> tuple[CriticalPoint3D, ...]:
+        """Search a rectangular box for numerical critical points."""
+        x_bounds = _validate_bounds(x_bounds, "x_bounds")
+        y_bounds = _validate_bounds(y_bounds, "y_bounds")
+        z_bounds = _validate_bounds(z_bounds, "z_bounds")
+        points: list[CriticalPoint3D] = []
+
+        for seed in _grid_3d(x_bounds, y_bounds, z_bounds, grid_size):
+            try:
+                x, y, z = _newton_solve(
+                    lambda values: self.gradient(
+                        values[0],
+                        values[1],
+                        values[2],
+                        h,
+                    ).components(),
+                    seed,
+                    tolerance,
+                    max_iterations,
+                    h,
+                )
+            except (ArithmeticError, ValueError, OverflowError, ZeroDivisionError):
+                continue
+
+            if not _within_bounds(
+                (x, y, z),
+                (x_bounds, y_bounds, z_bounds),
+                tolerance,
+            ):
+                continue
+
+            gradient = self.gradient(x, y, z, h)
+            if gradient.magnitude() > tolerance * 10:
+                continue
+
+            point = CriticalPoint3D(
+                point=Point3D(x, y, z),
+                value=self.function(x, y, z),
+                classification=self.classify_critical_point(x, y, z),
+                gradient_magnitude=gradient.magnitude(),
+            )
+            if not _has_nearby_point_3d(point.point, points, tolerance * 10):
+                points.append(point)
+
+        return tuple(
+            sorted(points, key=lambda item: (item.point.x, item.point.y, item.point.z))
+        )
+
+    def absolute_extrema_on_box(
+        self,
+        x_bounds: tuple[float, float],
+        y_bounds: tuple[float, float],
+        z_bounds: tuple[float, float],
+        grid_size: int = 9,
+        tolerance: float = 1e-5,
+        h: float = 1e-5,
+    ) -> ExtremaEstimate3D:
+        """Estimate absolute extrema over a closed rectangular box."""
+        x_bounds = _validate_bounds(x_bounds, "x_bounds")
+        y_bounds = _validate_bounds(y_bounds, "y_bounds")
+        z_bounds = _validate_bounds(z_bounds, "z_bounds")
+        candidates = [
+            FunctionPoint3D(Point3D(x, y, z), self.function(x, y, z))
+            for x, y, z in _grid_3d(x_bounds, y_bounds, z_bounds, grid_size)
+        ]
+        candidates.extend(
+            FunctionPoint3D(point.point, point.value)
+            for point in self.find_critical_points(
+                x_bounds,
+                y_bounds,
+                z_bounds,
+                grid_size=max(3, min(grid_size, 7)),
+                tolerance=tolerance,
+                h=h,
+            )
+        )
+        return ExtremaEstimate3D(
+            minimum=min(candidates, key=lambda item: item.value),
+            maximum=max(candidates, key=lambda item: item.value),
+            candidates=tuple(candidates),
+        )
+
+    def lagrange_extrema(
+        self,
+        constraint: NumberFunction3D,
+        x_bounds: tuple[float, float],
+        y_bounds: tuple[float, float],
+        z_bounds: tuple[float, float],
+        grid_size: int = 5,
+        tolerance: float = 1e-5,
+        max_iterations: int = 40,
+        h: float = 1e-5,
+    ) -> LagrangeExtrema3D:
+        """Estimate constrained extrema using one Lagrange multiplier."""
+        x_bounds = _validate_bounds(x_bounds, "x_bounds")
+        y_bounds = _validate_bounds(y_bounds, "y_bounds")
+        z_bounds = _validate_bounds(z_bounds, "z_bounds")
+        candidates: list[LagrangePoint3D] = []
+
+        def system(values: tuple[float, ...]) -> tuple[float, ...]:
+            x, y, z, multiplier = values
+            function_gradient = self.gradient(x, y, z, h)
+            constraint_gradient = _gradient_3d(constraint, x, y, z, h)
+            return (
+                function_gradient.x - multiplier * constraint_gradient.x,
+                function_gradient.y - multiplier * constraint_gradient.y,
+                function_gradient.z - multiplier * constraint_gradient.z,
+                constraint(x, y, z),
+            )
+
+        for x, y, z in _grid_3d(x_bounds, y_bounds, z_bounds, grid_size):
+            for multiplier in (-1.0, 0.0, 1.0):
+                try:
+                    solution = _newton_solve(
+                        system,
+                        (x, y, z, multiplier),
+                        tolerance,
+                        max_iterations,
+                        h,
+                    )
+                except (ArithmeticError, ValueError, OverflowError, ZeroDivisionError):
+                    continue
+
+                candidate_x, candidate_y, candidate_z, candidate_multiplier = (
+                    solution
+                )
+                constraint_value = constraint(candidate_x, candidate_y, candidate_z)
+                if not _within_bounds(
+                    (candidate_x, candidate_y, candidate_z),
+                    (x_bounds, y_bounds, z_bounds),
+                    tolerance,
+                ):
+                    continue
+                if abs(constraint_value) > tolerance * 10:
+                    continue
+
+                point = LagrangePoint3D(
+                    point=Point3D(candidate_x, candidate_y, candidate_z),
+                    value=self.function(candidate_x, candidate_y, candidate_z),
+                    multiplier=candidate_multiplier,
+                    constraint_value=constraint_value,
+                )
+                if not _has_nearby_lagrange_point_3d(
+                    point,
+                    candidates,
+                    tolerance * 10,
+                ):
+                    candidates.append(point)
+
+        if not candidates:
+            raise ValueError("No Lagrange extrema candidates were found.")
+
+        return LagrangeExtrema3D(
+            minimum=min(candidates, key=lambda item: item.value),
+            maximum=max(candidates, key=lambda item: item.value),
+            candidates=tuple(sorted(candidates, key=lambda item: item.value)),
+        )
+
     def limit_at(
         self,
         x: float,
@@ -569,6 +1061,288 @@ def _parameter_partials(
     return Vector2D(
         _central_difference(lambda value: function(value, v), u, h),
         _central_difference(lambda value: function(u, value), v, h),
+    )
+
+
+def _gradient_2d(function: NumberFunction2D, x: float, y: float, h: float) -> Vector2D:
+    return Vector2D(
+        _central_difference(lambda value: function(value, y), x, h),
+        _central_difference(lambda value: function(x, value), y, h),
+    )
+
+
+def _gradient_3d(
+    function: NumberFunction3D,
+    x: float,
+    y: float,
+    z: float,
+    h: float,
+) -> Vector3D:
+    return Vector3D(
+        _central_difference(lambda value: function(value, y, z), x, h),
+        _central_difference(lambda value: function(x, value, z), y, h),
+        _central_difference(lambda value: function(x, y, value), z, h),
+    )
+
+
+def _validate_bounds(bounds: tuple[float, float], name: str) -> tuple[float, float]:
+    lower, upper = bounds
+    if lower > upper:
+        raise ValueError(f"{name} must be ordered as (lower, upper).")
+    return (lower, upper)
+
+
+def _grid_2d(
+    x_bounds: tuple[float, float],
+    y_bounds: tuple[float, float],
+    grid_size: int,
+) -> tuple[tuple[float, float], ...]:
+    x_values = _linspace(x_bounds, grid_size)
+    y_values = _linspace(y_bounds, grid_size)
+    return tuple((x, y) for x in x_values for y in y_values)
+
+
+def _grid_3d(
+    x_bounds: tuple[float, float],
+    y_bounds: tuple[float, float],
+    z_bounds: tuple[float, float],
+    grid_size: int,
+) -> tuple[tuple[float, float, float], ...]:
+    x_values = _linspace(x_bounds, grid_size)
+    y_values = _linspace(y_bounds, grid_size)
+    z_values = _linspace(z_bounds, grid_size)
+    return tuple((x, y, z) for x in x_values for y in y_values for z in z_values)
+
+
+def _linspace(bounds: tuple[float, float], count: int) -> tuple[float, ...]:
+    if count < 2:
+        raise ValueError("grid_size must be at least 2.")
+    lower, upper = bounds
+    step = (upper - lower) / (count - 1)
+    return tuple(lower + index * step for index in range(count))
+
+
+def _within_bounds(
+    coordinates: tuple[float, ...],
+    bounds: tuple[tuple[float, float], ...],
+    tolerance: float,
+) -> bool:
+    return all(
+        lower - tolerance <= coordinate <= upper + tolerance
+        for coordinate, (lower, upper) in zip(coordinates, bounds)
+    )
+
+
+def _newton_solve(
+    system: Callable[[tuple[float, ...]], tuple[float, ...]],
+    seed: tuple[float, ...],
+    tolerance: float,
+    max_iterations: int,
+    h: float,
+) -> tuple[float, ...]:
+    if tolerance <= 0:
+        raise ValueError("tolerance must be positive.")
+    if max_iterations <= 0:
+        raise ValueError("max_iterations must be positive.")
+
+    point = tuple(seed)
+    for _ in range(max_iterations):
+        values = system(point)
+        if not _finite_values(values):
+            raise ValueError("Newton iteration produced non-finite values.")
+        if _vector_norm(values) <= tolerance:
+            return point
+
+        jacobian = _jacobian(system, point, h)
+        delta = _solve_linear_system(jacobian, values)
+        point = tuple(coordinate - change for coordinate, change in zip(point, delta))
+        if not _finite_values(point):
+            raise ValueError("Newton iteration produced non-finite coordinates.")
+        if _vector_norm(delta) <= tolerance:
+            return point
+
+    values = system(point)
+    if _finite_values(values) and _vector_norm(values) <= tolerance * 10:
+        return point
+    raise ValueError("Newton iteration did not converge.")
+
+
+def _jacobian(
+    system: Callable[[tuple[float, ...]], tuple[float, ...]],
+    point: tuple[float, ...],
+    h: float,
+) -> tuple[tuple[float, ...], ...]:
+    if h <= 0:
+        raise ValueError("h must be positive.")
+
+    columns = []
+    for variable_index in range(len(point)):
+        forward = list(point)
+        backward = list(point)
+        forward[variable_index] += h
+        backward[variable_index] -= h
+        forward_values = system(tuple(forward))
+        backward_values = system(tuple(backward))
+        columns.append(
+            tuple(
+                (forward_value - backward_value) / (2 * h)
+                for forward_value, backward_value in zip(forward_values, backward_values)
+            )
+        )
+
+    return tuple(
+        tuple(columns[column][row] for column in range(len(point)))
+        for row in range(len(point))
+    )
+
+
+def _solve_linear_system(
+    matrix: tuple[tuple[float, ...], ...],
+    rhs: tuple[float, ...],
+) -> tuple[float, ...]:
+    size = len(rhs)
+    augmented = [list(row) + [rhs[index]] for index, row in enumerate(matrix)]
+
+    for column in range(size):
+        pivot_row = max(
+            range(column, size),
+            key=lambda row: abs(augmented[row][column]),
+        )
+        if abs(augmented[pivot_row][column]) <= 1e-12:
+            raise ValueError("Linear system is singular.")
+        augmented[column], augmented[pivot_row] = (
+            augmented[pivot_row],
+            augmented[column],
+        )
+
+        for row in range(column + 1, size):
+            factor = augmented[row][column] / augmented[column][column]
+            for entry in range(column, size + 1):
+                augmented[row][entry] -= factor * augmented[column][entry]
+
+    solution = [0.0] * size
+    for row in range(size - 1, -1, -1):
+        known = sum(
+            augmented[row][column] * solution[column]
+            for column in range(row + 1, size)
+        )
+        solution[row] = (augmented[row][size] - known) / augmented[row][row]
+    return tuple(solution)
+
+
+def _symmetric_eigenvalues(
+    matrix: tuple[tuple[float, float, float], ...],
+) -> tuple[float, float, float]:
+    values = [list(row) for row in matrix]
+
+    for _ in range(40):
+        pivot_row, pivot_column = max(
+            ((0, 1), (0, 2), (1, 2)),
+            key=lambda indexes: abs(values[indexes[0]][indexes[1]]),
+        )
+        off_diagonal = values[pivot_row][pivot_column]
+        if abs(off_diagonal) <= 1e-12:
+            break
+
+        tau = (
+            values[pivot_column][pivot_column] - values[pivot_row][pivot_row]
+        ) / (2 * off_diagonal)
+        sign = 1.0 if tau >= 0 else -1.0
+        tangent = sign / (abs(tau) + math.sqrt(1 + tau**2))
+        cosine = 1 / math.sqrt(1 + tangent**2)
+        sine = tangent * cosine
+
+        row_value = values[pivot_row][pivot_row]
+        column_value = values[pivot_column][pivot_column]
+        values[pivot_row][pivot_row] = (
+            cosine**2 * row_value
+            - 2 * sine * cosine * off_diagonal
+            + sine**2 * column_value
+        )
+        values[pivot_column][pivot_column] = (
+            sine**2 * row_value
+            + 2 * sine * cosine * off_diagonal
+            + cosine**2 * column_value
+        )
+        values[pivot_row][pivot_column] = 0.0
+        values[pivot_column][pivot_row] = 0.0
+
+        for index in range(3):
+            if index in (pivot_row, pivot_column):
+                continue
+            row_entry = values[index][pivot_row]
+            column_entry = values[index][pivot_column]
+            values[index][pivot_row] = values[pivot_row][index] = (
+                cosine * row_entry - sine * column_entry
+            )
+            values[index][pivot_column] = values[pivot_column][index] = (
+                sine * row_entry + cosine * column_entry
+            )
+
+    return (values[0][0], values[1][1], values[2][2])
+
+
+def _finite_values(values: tuple[float, ...]) -> bool:
+    return all(math.isfinite(value) for value in values)
+
+
+def _vector_norm(values: tuple[float, ...]) -> float:
+    return math.sqrt(sum(value**2 for value in values))
+
+
+def _has_nearby_point_2d(
+    point: Point2D,
+    existing_points: list[CriticalPoint2D],
+    tolerance: float,
+) -> bool:
+    return any(
+        _distance_2d(point, existing.point) <= tolerance
+        for existing in existing_points
+    )
+
+
+def _has_nearby_point_3d(
+    point: Point3D,
+    existing_points: list[CriticalPoint3D],
+    tolerance: float,
+) -> bool:
+    return any(
+        _distance_3d(point, existing.point) <= tolerance
+        for existing in existing_points
+    )
+
+
+def _has_nearby_lagrange_point_2d(
+    point: LagrangePoint2D,
+    existing_points: list[LagrangePoint2D],
+    tolerance: float,
+) -> bool:
+    return any(
+        _distance_2d(point.point, existing.point) <= tolerance
+        for existing in existing_points
+    )
+
+
+def _has_nearby_lagrange_point_3d(
+    point: LagrangePoint3D,
+    existing_points: list[LagrangePoint3D],
+    tolerance: float,
+) -> bool:
+    return any(
+        _distance_3d(point.point, existing.point) <= tolerance
+        for existing in existing_points
+    )
+
+
+def _distance_2d(first: Point2D, second: Point2D) -> float:
+    return math.hypot(first.x - second.x, first.y - second.y)
+
+
+def _distance_3d(first: Point3D, second: Point3D) -> float:
+    return math.sqrt(
+        (first.x - second.x) ** 2
+        + (first.y - second.y) ** 2
+        + (first.z - second.z) ** 2
     )
 
 
