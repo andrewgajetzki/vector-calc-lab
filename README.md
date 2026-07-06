@@ -67,6 +67,8 @@ general Type I/Type II regions, plus local, absolute, and constrained extrema
 numerically.
 
 ```python
+import math
+
 from src.multivariable_functions import make_function_2d, make_function_3d
 from src.vectors import Vector2D, Vector3D
 
@@ -94,6 +96,7 @@ print(surface.differential(1, 2, dx=0.1, dy=-0.1))
 print(surface.double_integral_over_rectangle((0, 1), (0, 1)))
 print(surface.double_integral_type_i((0, 1), lambda x: 0, lambda x: x))
 print(surface.double_integral_type_ii((0, 1), lambda y: y, lambda y: 1))
+print(surface.double_integral_polar((0, math.pi / 2), lambda theta: 0, lambda theta: 1))
 
 extrema_surface = make_function_2d(lambda x, y: (x - 1)**2 + (y + 2)**2)
 print(extrema_surface.find_critical_points((-3, 3), (-4, 2))[0].as_text())
@@ -167,7 +170,7 @@ Formulas supported:
 - tangent planes to graphs `z = f(x, y)`
 - tangent planes to level surfaces `F(x, y, z) = c`
 - linear approximation and differentials
-- double integrals over rectangular and Type I/Type II general regions
+- double integrals over rectangular, Type I/Type II, and polar regions
 - second-derivative critical point test for `f(x, y)`
 - Hessian eigenvalue critical point classification for `f(x, y, z)`
 - numerical critical point searches over rectangles and boxes

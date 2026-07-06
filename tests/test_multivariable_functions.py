@@ -164,6 +164,33 @@ def test_function_2d_double_integral_over_type_ii_region():
     ) == pytest.approx(0.5, rel=1e-5)
 
 
+def test_function_2d_double_integral_over_polar_region():
+    constant = make_function_2d(lambda x, y: 1)
+    radial = make_function_2d(lambda x, y: x**2 + y**2)
+
+    assert constant.double_integral_polar(
+        (0, 2 * math.pi),
+        lambda theta: 0,
+        lambda theta: 2,
+        theta_segments=16,
+        r_segments=1,
+    ) == pytest.approx(4 * math.pi)
+    assert radial.double_integral_polar(
+        (0, 2 * math.pi),
+        lambda theta: 0,
+        lambda theta: 1,
+        theta_segments=32,
+        r_segments=400,
+    ) == pytest.approx(math.pi / 2, rel=1e-5)
+    assert constant.double_integral_polar(
+        (0, 1),
+        lambda theta: 0,
+        lambda theta: theta,
+        theta_segments=400,
+        r_segments=1,
+    ) == pytest.approx(1 / 6, rel=1e-5)
+
+
 def test_function_2d_chain_rule_for_one_parameter_path():
     function = make_function_2d(lambda x, y: x**2 * y + y)
 
@@ -395,4 +422,17 @@ def test_limit_helpers_validate_inputs():
             (0, 1),
             lambda x: 1,
             lambda x: 0,
+        )
+    with pytest.raises(ValueError, match="theta_segments"):
+        function.double_integral_polar(
+            (0, 1),
+            lambda theta: 0,
+            lambda theta: 1,
+            theta_segments=0,
+        )
+    with pytest.raises(ValueError, match="nonnegative"):
+        function.double_integral_polar(
+            (0, 1),
+            lambda theta: -1,
+            lambda theta: 1,
         )

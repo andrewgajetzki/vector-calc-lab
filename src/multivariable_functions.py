@@ -380,6 +380,28 @@ class ScalarFunction2D:
             "x_bounds",
         )
 
+    def double_integral_polar(
+        self,
+        theta_bounds: tuple[float, float],
+        r_lower: Callable[[float], float],
+        r_upper: Callable[[float], float],
+        theta_segments: int = 100,
+        r_segments: int = 100,
+    ) -> float:
+        """Approximate ``integral integral f(r cos t, r sin t) r dr dt``."""
+        theta_bounds = _validate_bounds(theta_bounds, "theta_bounds")
+        return _polar_trapezoid_rule(
+            lambda theta, radius: self.function(
+                radius * math.cos(theta),
+                radius * math.sin(theta),
+            ),
+            theta_bounds,
+            r_lower,
+            r_upper,
+            theta_segments,
+            r_segments,
+        )
+
     def hessian(
         self,
         x: float,
@@ -1246,6 +1268,42 @@ def _iterated_trapezoid_rule(
         total += outer_weight * inner_total * inner_step
 
     return total * outer_step
+
+
+def _polar_trapezoid_rule(
+    function: NumberFunction2D,
+    theta_bounds: tuple[float, float],
+    r_lower: Callable[[float], float],
+    r_upper: Callable[[float], float],
+    theta_segments: int,
+    r_segments: int,
+) -> float:
+    _validate_segments(theta_segments, "theta_segments")
+    _validate_segments(r_segments, "r_segments")
+
+    theta_start, theta_stop = theta_bounds
+    theta_step = (theta_stop - theta_start) / theta_segments
+    total = 0.0
+
+    for theta_index in range(theta_segments + 1):
+        theta = theta_start + theta_index * theta_step
+        theta_weight = 0.5 if theta_index in (0, theta_segments) else 1.0
+        r_start = r_lower(theta)
+        r_stop = r_upper(theta)
+        _validate_bounds((r_start, r_stop), "r_bounds")
+        if r_start < 0 or r_stop < 0:
+            raise ValueError("r_bounds must be nonnegative for polar integration.")
+
+        r_step = (r_stop - r_start) / r_segments
+        r_total = 0.0
+        for r_index in range(r_segments + 1):
+            radius = r_start + r_index * r_step
+            r_weight = 0.5 if r_index in (0, r_segments) else 1.0
+            r_total += r_weight * function(theta, radius) * radius
+
+        total += theta_weight * r_total * r_step
+
+    return total * theta_step
 
 
 def _validate_segments(segments: int, name: str) -> None:

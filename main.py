@@ -126,6 +126,15 @@ def run_multivariable_function_demo() -> None:
         "Double integral over triangle 0 <= y <= x <= 1: "
         f"{surface.double_integral_type_i((0, 1), lambda x: 0, lambda x: x):.6g}"
     )
+    quarter_disk_integral = surface.double_integral_polar(
+        (0, math.pi / 2),
+        lambda theta: 0,
+        lambda theta: 1,
+    )
+    print(
+        "Double integral over quarter disk 0 <= r <= 1: "
+        f"{quarter_disk_integral:.6g}"
+    )
     critical_point = extrema_surface.find_critical_points((-3, 3), (-4, 2))[0]
     rectangle_extrema = extrema_surface.absolute_extrema_on_rectangle((-1, 3), (-3, 1))
     constrained_extrema = constrained_surface.lagrange_extrema(
