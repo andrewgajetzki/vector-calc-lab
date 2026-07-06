@@ -96,6 +96,20 @@ def run_multivariable_function_demo() -> None:
         "Directional derivative at (1, 2) toward <3, 4>: "
         f"{surface.directional_derivative(1, 2, make_vector2d(3, 4)):.6g}"
     )
+    print(
+        "Chain rule d/dt f(t^2, t + 1) at t = 2: "
+        f"{surface.chain_rule_derivative(lambda t: t**2, lambda t: t + 1, 2):.6g}"
+    )
+    chain_partials = surface.chain_rule_partials(
+        lambda u, v: u + v**2,
+        lambda u, v: u * v,
+        2,
+        3,
+    )
+    print(
+        "Chain rule partials for f(u + v^2, uv) at (2, 3): "
+        f"{chain_partials.as_text()}"
+    )
     tangent_plane = surface.tangent_plane(1, 2)
     print(f"Tangent plane at (1, 2): {tangent_plane.as_text()}")
     print(

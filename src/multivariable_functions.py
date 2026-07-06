@@ -114,6 +114,41 @@ class ScalarFunction2D:
             raise ValueError("Directional derivative needs a nonzero direction vector.")
         return self.gradient(x, y, h).dot(direction.unit())
 
+    def chain_rule_derivative(
+        self,
+        x_of_t: Callable[[float], float],
+        y_of_t: Callable[[float], float],
+        t: float,
+        h: float = 1e-5,
+    ) -> float:
+        """Approximate ``d/dt f(x(t), y(t))`` using the chain rule."""
+        x = x_of_t(t)
+        y = y_of_t(t)
+        path_velocity = Vector2D(
+            _central_difference(x_of_t, t, h),
+            _central_difference(y_of_t, t, h),
+        )
+        return self.gradient(x, y, h).dot(path_velocity)
+
+    def chain_rule_partials(
+        self,
+        x_of_u_v: Callable[[float, float], float],
+        y_of_u_v: Callable[[float, float], float],
+        u: float,
+        v: float,
+        h: float = 1e-5,
+    ) -> Vector2D:
+        """Approximate ``<dw/du, dw/dv>`` for ``w = f(x(u, v), y(u, v))``."""
+        x = x_of_u_v(u, v)
+        y = y_of_u_v(u, v)
+        gradient = self.gradient(x, y, h)
+        x_partials = _parameter_partials(x_of_u_v, u, v, h)
+        y_partials = _parameter_partials(y_of_u_v, u, v, h)
+        return Vector2D(
+            gradient.x * x_partials.x + gradient.y * y_partials.x,
+            gradient.x * x_partials.y + gradient.y * y_partials.y,
+        )
+
     def tangent_plane(self, x: float, y: float, h: float = 1e-5) -> GraphTangentPlane:
         """Approximate the tangent plane to ``z = f(x, y)`` at ``(x, y)``."""
         return GraphTangentPlane(
@@ -290,6 +325,51 @@ class ScalarFunction3D:
         if direction.is_zero():
             raise ValueError("Directional derivative needs a nonzero direction vector.")
         return self.gradient(x, y, z, h).dot(direction.unit())
+
+    def chain_rule_derivative(
+        self,
+        x_of_t: Callable[[float], float],
+        y_of_t: Callable[[float], float],
+        z_of_t: Callable[[float], float],
+        t: float,
+        h: float = 1e-5,
+    ) -> float:
+        """Approximate ``d/dt f(x(t), y(t), z(t))`` using the chain rule."""
+        x = x_of_t(t)
+        y = y_of_t(t)
+        z = z_of_t(t)
+        path_velocity = Vector3D(
+            _central_difference(x_of_t, t, h),
+            _central_difference(y_of_t, t, h),
+            _central_difference(z_of_t, t, h),
+        )
+        return self.gradient(x, y, z, h).dot(path_velocity)
+
+    def chain_rule_partials(
+        self,
+        x_of_u_v: Callable[[float, float], float],
+        y_of_u_v: Callable[[float, float], float],
+        z_of_u_v: Callable[[float, float], float],
+        u: float,
+        v: float,
+        h: float = 1e-5,
+    ) -> Vector2D:
+        """Approximate ``<dw/du, dw/dv>`` for a two-parameter composition."""
+        x = x_of_u_v(u, v)
+        y = y_of_u_v(u, v)
+        z = z_of_u_v(u, v)
+        gradient = self.gradient(x, y, z, h)
+        x_partials = _parameter_partials(x_of_u_v, u, v, h)
+        y_partials = _parameter_partials(y_of_u_v, u, v, h)
+        z_partials = _parameter_partials(z_of_u_v, u, v, h)
+        return Vector2D(
+            gradient.x * x_partials.x
+            + gradient.y * y_partials.x
+            + gradient.z * z_partials.x,
+            gradient.x * x_partials.y
+            + gradient.y * y_partials.y
+            + gradient.z * z_partials.y,
+        )
 
     def linear_approximation(
         self,
@@ -478,6 +558,18 @@ def _mixed_partial_3d(
         - shifted(-h, h)
         + shifted(-h, -h)
     ) / (4 * h**2)
+
+
+def _parameter_partials(
+    function: Callable[[float, float], float],
+    u: float,
+    v: float,
+    h: float,
+) -> Vector2D:
+    return Vector2D(
+        _central_difference(lambda value: function(value, v), u, h),
+        _central_difference(lambda value: function(u, value), v, h),
+    )
 
 
 def _estimate_limit(

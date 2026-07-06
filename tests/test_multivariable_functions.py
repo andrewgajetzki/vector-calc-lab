@@ -62,6 +62,31 @@ def test_function_2d_directional_derivative_tangent_plane_and_linearization():
     assert function.differential(1, 2, 0.1, -0.1) == pytest.approx(0.1)
 
 
+def test_function_2d_chain_rule_for_one_parameter_path():
+    function = make_function_2d(lambda x, y: x**2 * y + y)
+
+    derivative = function.chain_rule_derivative(
+        lambda t: t**2,
+        lambda t: t + 1,
+        t=2,
+    )
+
+    assert derivative == pytest.approx(113)
+
+
+def test_function_2d_chain_rule_for_two_parameter_substitution():
+    function = make_function_2d(lambda x, y: x * y + y**2)
+
+    partials = function.chain_rule_partials(
+        lambda u, v: u + v**2,
+        lambda u, v: u * v,
+        u=2,
+        v=3,
+    )
+
+    assert_vector2d(partials, 75, 82)
+
+
 def test_function_2d_estimates_limits_and_continuity():
     continuous = make_function_2d(lambda x, y: x**2 + y**2)
 
@@ -125,6 +150,33 @@ def test_function_3d_directional_derivative_linearization_and_differential():
         35.35
     )
     assert function.differential(1, 2, 3, 0.1, -0.1, 0.05) == pytest.approx(1.35)
+
+
+def test_function_3d_chain_rule_for_one_parameter_path():
+    function = make_function_3d(lambda x, y, z: x * y + z**2)
+
+    derivative = function.chain_rule_derivative(
+        lambda t: t,
+        lambda t: t**2,
+        lambda t: t + 1,
+        t=2,
+    )
+
+    assert derivative == pytest.approx(18)
+
+
+def test_function_3d_chain_rule_for_two_parameter_substitution():
+    function = make_function_3d(lambda x, y, z: x + y * z)
+
+    partials = function.chain_rule_partials(
+        lambda u, v: u * v,
+        lambda u, v: u + v,
+        lambda u, v: u - v,
+        u=3,
+        v=2,
+    )
+
+    assert_vector2d(partials, 8, -1)
 
 
 def test_function_3d_estimates_limits_and_continuity():
