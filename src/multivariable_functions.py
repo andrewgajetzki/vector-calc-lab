@@ -336,6 +336,50 @@ class ScalarFunction2D:
             y_segments,
         )
 
+    def double_integral_type_i(
+        self,
+        x_bounds: tuple[float, float],
+        y_lower: Callable[[float], float],
+        y_upper: Callable[[float], float],
+        x_segments: int = 100,
+        y_segments: int = 100,
+    ) -> float:
+        """Approximate ``integral_a^b integral_g1(x)^g2(x) f(x, y) dy dx``."""
+        x_bounds = _validate_bounds(x_bounds, "x_bounds")
+        return _iterated_trapezoid_rule(
+            x_bounds,
+            y_lower,
+            y_upper,
+            lambda x, y: self.function(x, y),
+            x_segments,
+            y_segments,
+            "x_segments",
+            "y_segments",
+            "y_bounds",
+        )
+
+    def double_integral_type_ii(
+        self,
+        y_bounds: tuple[float, float],
+        x_lower: Callable[[float], float],
+        x_upper: Callable[[float], float],
+        y_segments: int = 100,
+        x_segments: int = 100,
+    ) -> float:
+        """Approximate ``integral_c^d integral_h1(y)^h2(y) f(x, y) dx dy``."""
+        y_bounds = _validate_bounds(y_bounds, "y_bounds")
+        return _iterated_trapezoid_rule(
+            y_bounds,
+            x_lower,
+            x_upper,
+            lambda y, x: self.function(x, y),
+            y_segments,
+            x_segments,
+            "y_segments",
+            "x_segments",
+            "x_bounds",
+        )
+
     def hessian(
         self,
         x: float,
@@ -1165,6 +1209,43 @@ def _double_trapezoid_rule(
             total += x_weight * y_weight * function(x, y)
 
     return total * x_step * y_step
+
+
+def _iterated_trapezoid_rule(
+    outer_bounds: tuple[float, float],
+    inner_lower: Callable[[float], float],
+    inner_upper: Callable[[float], float],
+    function: NumberFunction2D,
+    outer_segments: int,
+    inner_segments: int,
+    outer_segments_name: str,
+    inner_segments_name: str,
+    inner_bounds_name: str,
+) -> float:
+    _validate_segments(outer_segments, outer_segments_name)
+    _validate_segments(inner_segments, inner_segments_name)
+
+    outer_start, outer_stop = outer_bounds
+    outer_step = (outer_stop - outer_start) / outer_segments
+    total = 0.0
+
+    for outer_index in range(outer_segments + 1):
+        outer_value = outer_start + outer_index * outer_step
+        outer_weight = 0.5 if outer_index in (0, outer_segments) else 1.0
+        inner_start = inner_lower(outer_value)
+        inner_stop = inner_upper(outer_value)
+        _validate_bounds((inner_start, inner_stop), inner_bounds_name)
+
+        inner_step = (inner_stop - inner_start) / inner_segments
+        inner_total = 0.0
+        for inner_index in range(inner_segments + 1):
+            inner_value = inner_start + inner_index * inner_step
+            inner_weight = 0.5 if inner_index in (0, inner_segments) else 1.0
+            inner_total += inner_weight * function(outer_value, inner_value)
+
+        total += outer_weight * inner_total * inner_step
+
+    return total * outer_step
 
 
 def _validate_segments(segments: int, name: str) -> None:

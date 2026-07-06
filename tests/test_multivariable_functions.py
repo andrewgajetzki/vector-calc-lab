@@ -124,6 +124,46 @@ def test_function_2d_double_integral_over_rectangle():
     ) == pytest.approx(2 / 3, rel=1e-4)
 
 
+def test_function_2d_double_integral_over_type_i_region():
+    constant = make_function_2d(lambda x, y: 1)
+    linear = make_function_2d(lambda x, y: x + y)
+
+    assert constant.double_integral_type_i(
+        (0, 1),
+        lambda x: 0,
+        lambda x: x,
+        x_segments=4,
+        y_segments=4,
+    ) == pytest.approx(0.5)
+    assert linear.double_integral_type_i(
+        (0, 1),
+        lambda x: 0,
+        lambda x: x,
+        x_segments=400,
+        y_segments=20,
+    ) == pytest.approx(0.5, rel=1e-5)
+
+
+def test_function_2d_double_integral_over_type_ii_region():
+    constant = make_function_2d(lambda x, y: 1)
+    linear = make_function_2d(lambda x, y: x + y)
+
+    assert constant.double_integral_type_ii(
+        (0, 1),
+        lambda y: y,
+        lambda y: 1,
+        y_segments=4,
+        x_segments=4,
+    ) == pytest.approx(0.5)
+    assert linear.double_integral_type_ii(
+        (0, 1),
+        lambda y: y,
+        lambda y: 1,
+        y_segments=400,
+        x_segments=20,
+    ) == pytest.approx(0.5, rel=1e-5)
+
+
 def test_function_2d_chain_rule_for_one_parameter_path():
     function = make_function_2d(lambda x, y: x**2 * y + y)
 
@@ -343,3 +383,16 @@ def test_limit_helpers_validate_inputs():
         function.double_integral_over_rectangle((0, 1), (0, 1), x_segments=0)
     with pytest.raises(ValueError, match="x_bounds"):
         function.double_integral_over_rectangle((1, 0), (0, 1))
+    with pytest.raises(ValueError, match="y_segments"):
+        function.double_integral_type_i(
+            (0, 1),
+            lambda x: 0,
+            lambda x: x,
+            y_segments=0,
+        )
+    with pytest.raises(ValueError, match="y_bounds"):
+        function.double_integral_type_i(
+            (0, 1),
+            lambda x: 1,
+            lambda x: 0,
+        )
