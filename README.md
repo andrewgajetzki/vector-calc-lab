@@ -60,8 +60,8 @@ f(x, y)
 f(x, y, z)
 ```
 
-They approximate partial derivatives, gradients, directional derivatives,
-tangent planes, and linear approximations.
+They approximate multivariable limits, continuity, partial derivatives,
+gradients, directional derivatives, tangent planes, and linear approximations.
 
 ```python
 from src.multivariable_functions import make_function_2d, make_function_3d
@@ -80,12 +80,24 @@ print(surface.tangent_plane(1, 2).as_text())
 print(surface.linear_approximation(1, 2, 1.1, 1.9))
 print(surface.differential(1, 2, dx=0.1, dy=-0.1))
 
+origin_surface = make_function_2d(lambda x, y: x**2 + y**2)
+print(origin_surface.limit_at(0, 0).as_text())
+print(origin_surface.is_continuous_at(0, 0))
+
+path_dependent = make_function_2d(
+    lambda x, y: 0 if x == 0 and y == 0 else (x * y) / (x**2 + y**2)
+)
+print(path_dependent.limit_at(0, 0).as_text())
+print(path_dependent.limit_along_path(lambda t: t, lambda t: t).as_text())
+
 volume_function = make_function_3d(lambda x, y, z: x**2 + y * z + z**3)
 
 print(volume_function.partial_z(1, 2, 3))
 print(volume_function.gradient(1, 2, 3).as_text())
 print(volume_function.directional_derivative(1, 2, 3, Vector3D(0, 0, 2)))
 print(volume_function.linear_approximation(1, 2, 3, 1.1, 1.9, 3.05))
+print(volume_function.limit_at(1, 2, 3).as_text())
+print(volume_function.is_continuous_at(1, 2, 3))
 
 level_surface = make_function_3d(lambda x, y, z: x**2 + y**2 + z**2)
 print(level_surface.level_surface_tangent_plane(1, 2, 2).scalar_equation())
@@ -93,6 +105,9 @@ print(level_surface.level_surface_tangent_plane(1, 2, 2).scalar_equation())
 
 Formulas supported:
 
+- numerical multivariable limit estimates by radial sampling
+- path-based limit estimates
+- numerical continuity checks at a point
 - first partial derivatives `fx`, `fy`, and `fz`
 - second partial derivatives and Hessian matrices
 - gradient vectors `grad f`
@@ -101,6 +116,8 @@ Formulas supported:
 - tangent planes to level surfaces `F(x, y, z) = c`
 - linear approximation and differentials
 - second-derivative critical point test for `f(x, y)`
+
+Limit and continuity checks provide numerical evidence, not symbolic proofs.
 
 ## Vector-Valued Functions and Space Curves
 

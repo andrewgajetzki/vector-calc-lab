@@ -62,6 +62,43 @@ def test_function_2d_directional_derivative_tangent_plane_and_linearization():
     assert function.differential(1, 2, 0.1, -0.1) == pytest.approx(0.1)
 
 
+def test_function_2d_estimates_limits_and_continuity():
+    continuous = make_function_2d(lambda x, y: x**2 + y**2)
+
+    estimate = continuous.limit_at(0, 0)
+
+    assert estimate.converged
+    assert estimate.value == pytest.approx(0, abs=1e-4)
+    assert continuous.is_continuous_at(0, 0)
+    assert "converged" in estimate.as_text()
+
+
+def test_function_2d_detects_path_dependent_limit_evidence():
+    def ratio(x: float, y: float) -> float:
+        if x == 0 and y == 0:
+            return 0
+        return x * y / (x**2 + y**2)
+
+    function = make_function_2d(ratio)
+
+    estimate = function.limit_at(0, 0)
+    x_axis = function.limit_along_path(lambda t: t, lambda t: 0)
+    diagonal = function.limit_along_path(lambda t: t, lambda t: t)
+
+    assert not estimate.converged
+    assert not function.is_continuous_at(0, 0)
+    assert x_axis.value == pytest.approx(0)
+    assert diagonal.value == pytest.approx(0.5)
+
+
+def test_function_2d_detects_removable_discontinuity_evidence():
+    function = make_function_2d(
+        lambda x, y: 1 if x == 0 and y == 0 else x**2 + y**2
+    )
+
+    assert not function.is_continuous_at(0, 0)
+
+
 def test_function_3d_evaluates_partials_gradient_and_hessian():
     function = make_function_3d(lambda x, y, z: x**2 + y * z + z**3)
 
@@ -90,6 +127,34 @@ def test_function_3d_directional_derivative_linearization_and_differential():
     assert function.differential(1, 2, 3, 0.1, -0.1, 0.05) == pytest.approx(1.35)
 
 
+def test_function_3d_estimates_limits_and_continuity():
+    function = make_function_3d(lambda x, y, z: x + y + z)
+
+    estimate = function.limit_at(1, 2, 3)
+
+    assert estimate.converged
+    assert estimate.value == pytest.approx(6)
+    assert function.is_continuous_at(1, 2, 3)
+
+
+def test_function_3d_detects_path_dependent_limit_evidence():
+    def ratio(x: float, y: float, z: float) -> float:
+        denominator = x**2 + y**2 + z**2
+        if denominator == 0:
+            return 0
+        return x**2 / denominator
+
+    function = make_function_3d(ratio)
+
+    estimate = function.limit_at(0, 0, 0)
+    x_axis = function.limit_along_path(lambda t: t, lambda t: 0, lambda t: 0)
+    y_axis = function.limit_along_path(lambda t: 0, lambda t: t, lambda t: 0)
+
+    assert not estimate.converged
+    assert x_axis.value == pytest.approx(1)
+    assert y_axis.value == pytest.approx(0)
+
+
 def test_level_surface_tangent_plane_uses_gradient_as_normal():
     sphere_level = make_function_3d(lambda x, y, z: x**2 + y**2 + z**2)
 
@@ -110,3 +175,12 @@ def test_zero_direction_and_zero_gradient_raise_value_error():
         function_3d.directional_derivative(0, 0, 0, Vector3D(0, 0, 0))
     with pytest.raises(ValueError, match="nonzero gradient"):
         constant_3d.level_surface_tangent_plane(0, 0, 0)
+
+
+def test_limit_helpers_validate_inputs():
+    function = make_function_2d(lambda x, y: x + y)
+
+    with pytest.raises(ValueError, match="tolerance"):
+        function.limit_at(0, 0, tolerance=0)
+    with pytest.raises(ValueError, match="side"):
+        function.limit_along_path(lambda t: t, lambda t: t, side="later")

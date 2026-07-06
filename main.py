@@ -78,6 +78,10 @@ def run_vector_demo() -> None:
 def run_multivariable_function_demo() -> None:
     """Show differentiation tools for functions of several variables."""
     surface = make_function_2d(lambda x, y: x**2 + 3 * x * y + y**2)
+    origin_surface = make_function_2d(lambda x, y: x**2 + y**2)
+    path_dependent = make_function_2d(
+        lambda x, y: 0 if x == 0 and y == 0 else x * y / (x**2 + y**2)
+    )
     level_surface = make_function_3d(lambda x, y, z: x**2 + y**2 + z**2)
 
     print("Functions of Several Variables")
@@ -97,6 +101,22 @@ def run_multivariable_function_demo() -> None:
     print(
         "Linear approximation at (1.1, 1.9): "
         f"{surface.linear_approximation(1, 2, 1.1, 1.9):.6g}"
+    )
+    print(
+        "Limit of x^2 + y^2 at (0, 0): "
+        f"{origin_surface.limit_at(0, 0).as_text()}"
+    )
+    print(
+        "Continuity of x^2 + y^2 at (0, 0): "
+        f"{origin_surface.is_continuous_at(0, 0)}"
+    )
+    print(
+        "Path-dependent limit sample at (0, 0): "
+        f"{path_dependent.limit_at(0, 0).as_text()}"
+    )
+    print(
+        "Path-dependent sample along y = x: "
+        f"{path_dependent.limit_along_path(lambda t: t, lambda t: t).as_text()}"
     )
     print(
         "Tangent plane to x^2 + y^2 + z^2 = 9 at (1, 2, 2): "
