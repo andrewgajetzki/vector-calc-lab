@@ -63,8 +63,9 @@ f(x, y, z)
 They approximate multivariable limits, continuity, partial derivatives,
 gradients, directional derivatives, chain-rule derivatives, tangent planes, and
 linear approximations. They also estimate double integrals over rectangular and
-general Type I/Type II regions, triple integrals, plus local, absolute, and
-constrained extrema numerically.
+general Type I/Type II regions, triple integrals in rectangular, cylindrical,
+and spherical coordinates, plus local, absolute, and constrained extrema
+numerically.
 
 ```python
 import math
@@ -127,6 +128,7 @@ print(path_dependent.limit_at(0, 0).as_text())
 print(path_dependent.limit_along_path(lambda t: t, lambda t: t).as_text())
 
 volume_function = make_function_3d(lambda x, y, z: x**2 + y * z + z**3)
+unit_density = make_function_3d(lambda x, y, z: 1)
 
 print(volume_function.partial_z(1, 2, 3))
 print(volume_function.gradient(1, 2, 3).as_text())
@@ -150,6 +152,24 @@ print(
         lambda x: x,
         lambda x, y: 0,
         lambda x, y: y,
+    )
+)
+print(
+    unit_density.triple_integral_cylindrical(
+        (0, 2 * math.pi),
+        lambda theta: 0,
+        lambda theta: 1,
+        lambda theta, r: 0,
+        lambda theta, r: 2,
+    )
+)
+print(
+    unit_density.triple_integral_spherical(
+        (0, 2 * math.pi),
+        lambda theta: 0,
+        lambda theta: math.pi,
+        lambda theta, phi: 0,
+        lambda theta, phi: 1,
     )
 )
 
@@ -181,7 +201,8 @@ Formulas supported:
 - tangent planes to level surfaces `F(x, y, z) = c`
 - linear approximation and differentials
 - double integrals over rectangular, Type I/Type II, and polar regions
-- triple integrals over rectangular boxes and nested `dz dy dx` regions
+- triple integrals over rectangular boxes, nested `dz dy dx` regions,
+  cylindrical coordinates, and spherical coordinates
 - second-derivative critical point test for `f(x, y)`
 - Hessian eigenvalue critical point classification for `f(x, y, z)`
 - numerical critical point searches over rectangles and boxes

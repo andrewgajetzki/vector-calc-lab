@@ -85,6 +85,7 @@ def run_multivariable_function_demo() -> None:
         lambda x, y: 0 if x == 0 and y == 0 else x * y / (x**2 + y**2)
     )
     volume_function = make_function_3d(lambda x, y, z: x + y + z)
+    unit_density = make_function_3d(lambda x, y, z: 1)
     level_surface = make_function_3d(lambda x, y, z: x**2 + y**2 + z**2)
 
     print("Functions of Several Variables")
@@ -140,6 +141,22 @@ def run_multivariable_function_demo() -> None:
         "Triple integral over [0, 1]^3: "
         f"{volume_function.triple_integral_over_box((0, 1), (0, 1), (0, 1)):.6g}"
     )
+    cylinder_volume = unit_density.triple_integral_cylindrical(
+        (0, 2 * math.pi),
+        lambda theta: 0,
+        lambda theta: 1,
+        lambda theta, radius: 0,
+        lambda theta, radius: 2,
+    )
+    ball_volume = unit_density.triple_integral_spherical(
+        (0, 2 * math.pi),
+        lambda theta: 0,
+        lambda theta: math.pi,
+        lambda theta, phi: 0,
+        lambda theta, phi: 1,
+    )
+    print(f"Cylindrical integral over radius 1, height 2: {cylinder_volume:.6g}")
+    print(f"Spherical integral over unit ball: {ball_volume:.6g}")
     critical_point = extrema_surface.find_critical_points((-3, 3), (-4, 2))[0]
     rectangle_extrema = extrema_surface.absolute_extrema_on_rectangle((-1, 3), (-3, 1))
     constrained_extrema = constrained_surface.lagrange_extrema(

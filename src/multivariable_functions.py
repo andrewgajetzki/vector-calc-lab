@@ -826,6 +826,64 @@ class ScalarFunction3D:
             z_segments,
         )
 
+    def triple_integral_cylindrical(
+        self,
+        theta_bounds: tuple[float, float],
+        r_lower: Callable[[float], float],
+        r_upper: Callable[[float], float],
+        z_lower: Callable[[float, float], float],
+        z_upper: Callable[[float, float], float],
+        theta_segments: int = 30,
+        r_segments: int = 30,
+        z_segments: int = 30,
+    ) -> float:
+        """Approximate a cylindrical-coordinate triple integral."""
+        theta_bounds = _validate_bounds(theta_bounds, "theta_bounds")
+        return _cylindrical_trapezoid_rule(
+            lambda theta, radius, z: self.function(
+                radius * math.cos(theta),
+                radius * math.sin(theta),
+                z,
+            ),
+            theta_bounds,
+            r_lower,
+            r_upper,
+            z_lower,
+            z_upper,
+            theta_segments,
+            r_segments,
+            z_segments,
+        )
+
+    def triple_integral_spherical(
+        self,
+        theta_bounds: tuple[float, float],
+        phi_lower: Callable[[float], float],
+        phi_upper: Callable[[float], float],
+        rho_lower: Callable[[float, float], float],
+        rho_upper: Callable[[float, float], float],
+        theta_segments: int = 30,
+        phi_segments: int = 30,
+        rho_segments: int = 30,
+    ) -> float:
+        """Approximate a spherical-coordinate triple integral."""
+        theta_bounds = _validate_bounds(theta_bounds, "theta_bounds")
+        return _spherical_trapezoid_rule(
+            lambda theta, phi, rho: self.function(
+                rho * math.sin(phi) * math.cos(theta),
+                rho * math.sin(phi) * math.sin(theta),
+                rho * math.cos(phi),
+            ),
+            theta_bounds,
+            phi_lower,
+            phi_upper,
+            rho_lower,
+            rho_upper,
+            theta_segments,
+            phi_segments,
+            rho_segments,
+        )
+
     def level_surface_tangent_plane(
         self,
         x: float,
@@ -1436,6 +1494,109 @@ def _iterated_triple_trapezoid_rule(
         total += x_weight * y_total * y_step
 
     return total * x_step
+
+
+def _cylindrical_trapezoid_rule(
+    function: NumberFunction3D,
+    theta_bounds: tuple[float, float],
+    r_lower: Callable[[float], float],
+    r_upper: Callable[[float], float],
+    z_lower: Callable[[float, float], float],
+    z_upper: Callable[[float, float], float],
+    theta_segments: int,
+    r_segments: int,
+    z_segments: int,
+) -> float:
+    _validate_segments(theta_segments, "theta_segments")
+    _validate_segments(r_segments, "r_segments")
+    _validate_segments(z_segments, "z_segments")
+
+    theta_start, theta_stop = theta_bounds
+    theta_step = (theta_stop - theta_start) / theta_segments
+    total = 0.0
+
+    for theta_index in range(theta_segments + 1):
+        theta = theta_start + theta_index * theta_step
+        theta_weight = 0.5 if theta_index in (0, theta_segments) else 1.0
+        r_start = r_lower(theta)
+        r_stop = r_upper(theta)
+        _validate_bounds((r_start, r_stop), "r_bounds")
+        if r_start < 0 or r_stop < 0:
+            raise ValueError("r_bounds must be nonnegative for cylindrical integration.")
+
+        r_step = (r_stop - r_start) / r_segments
+        r_total = 0.0
+        for r_index in range(r_segments + 1):
+            radius = r_start + r_index * r_step
+            r_weight = 0.5 if r_index in (0, r_segments) else 1.0
+            z_start = z_lower(theta, radius)
+            z_stop = z_upper(theta, radius)
+            _validate_bounds((z_start, z_stop), "z_bounds")
+
+            z_step = (z_stop - z_start) / z_segments
+            z_total = 0.0
+            for z_index in range(z_segments + 1):
+                z = z_start + z_index * z_step
+                z_weight = 0.5 if z_index in (0, z_segments) else 1.0
+                z_total += z_weight * function(theta, radius, z) * radius
+
+            r_total += r_weight * z_total * z_step
+
+        total += theta_weight * r_total * r_step
+
+    return total * theta_step
+
+
+def _spherical_trapezoid_rule(
+    function: NumberFunction3D,
+    theta_bounds: tuple[float, float],
+    phi_lower: Callable[[float], float],
+    phi_upper: Callable[[float], float],
+    rho_lower: Callable[[float, float], float],
+    rho_upper: Callable[[float, float], float],
+    theta_segments: int,
+    phi_segments: int,
+    rho_segments: int,
+) -> float:
+    _validate_segments(theta_segments, "theta_segments")
+    _validate_segments(phi_segments, "phi_segments")
+    _validate_segments(rho_segments, "rho_segments")
+
+    theta_start, theta_stop = theta_bounds
+    theta_step = (theta_stop - theta_start) / theta_segments
+    total = 0.0
+
+    for theta_index in range(theta_segments + 1):
+        theta = theta_start + theta_index * theta_step
+        theta_weight = 0.5 if theta_index in (0, theta_segments) else 1.0
+        phi_start = phi_lower(theta)
+        phi_stop = phi_upper(theta)
+        _validate_bounds((phi_start, phi_stop), "phi_bounds")
+
+        phi_step = (phi_stop - phi_start) / phi_segments
+        phi_total = 0.0
+        for phi_index in range(phi_segments + 1):
+            phi = phi_start + phi_index * phi_step
+            phi_weight = 0.5 if phi_index in (0, phi_segments) else 1.0
+            rho_start = rho_lower(theta, phi)
+            rho_stop = rho_upper(theta, phi)
+            _validate_bounds((rho_start, rho_stop), "rho_bounds")
+            if rho_start < 0 or rho_stop < 0:
+                raise ValueError("rho_bounds must be nonnegative for spherical integration.")
+
+            rho_step = (rho_stop - rho_start) / rho_segments
+            rho_total = 0.0
+            for rho_index in range(rho_segments + 1):
+                rho = rho_start + rho_index * rho_step
+                rho_weight = 0.5 if rho_index in (0, rho_segments) else 1.0
+                jacobian = rho**2 * abs(math.sin(phi))
+                rho_total += rho_weight * function(theta, phi, rho) * jacobian
+
+            phi_total += phi_weight * rho_total * rho_step
+
+        total += theta_weight * phi_total * phi_step
+
+    return total * theta_step
 
 
 def _validate_segments(segments: int, name: str) -> None:

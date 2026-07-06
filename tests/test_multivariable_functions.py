@@ -338,6 +338,78 @@ def test_function_3d_triple_integral_over_iterated_region():
     ) == pytest.approx(0.75, rel=1e-5)
 
 
+def test_function_3d_triple_integral_over_cylindrical_region():
+    constant = make_function_3d(lambda x, y, z: 1)
+    radial = make_function_3d(lambda x, y, z: x**2 + y**2)
+
+    assert constant.triple_integral_cylindrical(
+        (0, 2 * math.pi),
+        lambda theta: 0,
+        lambda theta: 2,
+        lambda theta, radius: 0,
+        lambda theta, radius: 3,
+        theta_segments=16,
+        r_segments=1,
+        z_segments=1,
+    ) == pytest.approx(12 * math.pi)
+    assert radial.triple_integral_cylindrical(
+        (0, 2 * math.pi),
+        lambda theta: 0,
+        lambda theta: 1,
+        lambda theta, radius: 0,
+        lambda theta, radius: 1,
+        theta_segments=16,
+        r_segments=400,
+        z_segments=1,
+    ) == pytest.approx(math.pi / 2, rel=1e-5)
+    assert constant.triple_integral_cylindrical(
+        (0, 2 * math.pi),
+        lambda theta: 0,
+        lambda theta: 1,
+        lambda theta, radius: 0,
+        lambda theta, radius: radius,
+        theta_segments=16,
+        r_segments=400,
+        z_segments=1,
+    ) == pytest.approx(2 * math.pi / 3, rel=1e-5)
+
+
+def test_function_3d_triple_integral_over_spherical_region():
+    constant = make_function_3d(lambda x, y, z: 1)
+    radial = make_function_3d(lambda x, y, z: x**2 + y**2 + z**2)
+
+    assert constant.triple_integral_spherical(
+        (0, 2 * math.pi),
+        lambda theta: 0,
+        lambda theta: math.pi,
+        lambda theta, phi: 0,
+        lambda theta, phi: 1,
+        theta_segments=16,
+        phi_segments=100,
+        rho_segments=100,
+    ) == pytest.approx(4 * math.pi / 3, rel=5e-4)
+    assert constant.triple_integral_spherical(
+        (0, math.pi / 2),
+        lambda theta: 0,
+        lambda theta: math.pi / 2,
+        lambda theta, phi: 0,
+        lambda theta, phi: 1,
+        theta_segments=16,
+        phi_segments=100,
+        rho_segments=100,
+    ) == pytest.approx(math.pi / 6, rel=5e-4)
+    assert radial.triple_integral_spherical(
+        (0, 2 * math.pi),
+        lambda theta: 0,
+        lambda theta: math.pi,
+        lambda theta, phi: 0,
+        lambda theta, phi: 1,
+        theta_segments=16,
+        phi_segments=100,
+        rho_segments=400,
+    ) == pytest.approx(4 * math.pi / 5, rel=5e-4)
+
+
 def test_function_3d_classifies_and_finds_critical_points():
     minimum = make_function_3d(lambda x, y, z: (x - 1) ** 2 + (y + 1) ** 2 + z**2)
     maximum = make_function_3d(lambda x, y, z: -(x**2) - y**2 - z**2)
@@ -508,4 +580,29 @@ def test_limit_helpers_validate_inputs():
             lambda x: 1,
             lambda x, y: 1,
             lambda x, y: 0,
+        )
+    with pytest.raises(ValueError, match="nonnegative"):
+        function_3d.triple_integral_cylindrical(
+            (0, 1),
+            lambda theta: -1,
+            lambda theta: 1,
+            lambda theta, radius: 0,
+            lambda theta, radius: 1,
+        )
+    with pytest.raises(ValueError, match="phi_segments"):
+        function_3d.triple_integral_spherical(
+            (0, 1),
+            lambda theta: 0,
+            lambda theta: 1,
+            lambda theta, phi: 0,
+            lambda theta, phi: 1,
+            phi_segments=0,
+        )
+    with pytest.raises(ValueError, match="nonnegative"):
+        function_3d.triple_integral_spherical(
+            (0, 1),
+            lambda theta: 0,
+            lambda theta: 1,
+            lambda theta, phi: -1,
+            lambda theta, phi: 1,
         )
