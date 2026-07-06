@@ -191,6 +191,72 @@ def test_function_2d_double_integral_over_polar_region():
     ) == pytest.approx(1 / 6, rel=1e-5)
 
 
+def test_function_2d_mass_properties_over_rectangle():
+    density = make_function_2d(lambda x, y: 2)
+
+    properties = density.mass_properties_over_rectangle(
+        (0, 2),
+        (0, 3),
+        x_segments=100,
+        y_segments=100,
+    )
+
+    assert properties.mass == pytest.approx(12)
+    assert properties.center_of_mass.x == pytest.approx(1)
+    assert properties.center_of_mass.y == pytest.approx(1.5)
+    assert properties.first_moment_x == pytest.approx(18)
+    assert properties.first_moment_y == pytest.approx(12)
+    assert properties.moment_of_inertia_x == pytest.approx(36, rel=1e-4)
+    assert properties.moment_of_inertia_y == pytest.approx(16, rel=1e-4)
+    assert properties.polar_moment_of_inertia == pytest.approx(52, rel=1e-4)
+    assert properties.as_text() == "mass = 12, center = (1, 1.5)"
+
+
+def test_function_2d_mass_properties_over_general_regions():
+    density = make_function_2d(lambda x, y: 1)
+
+    type_i = density.mass_properties_type_i(
+        (0, 1),
+        lambda x: 0,
+        lambda x: x,
+        x_segments=400,
+        y_segments=1,
+    )
+    type_ii = density.mass_properties_type_ii(
+        (0, 1),
+        lambda y: y,
+        lambda y: 1,
+        y_segments=400,
+        x_segments=1,
+    )
+
+    assert type_i.mass == pytest.approx(0.5, rel=1e-5)
+    assert type_i.center_of_mass.x == pytest.approx(2 / 3, rel=1e-5)
+    assert type_i.center_of_mass.y == pytest.approx(1 / 3, rel=1e-5)
+    assert type_ii.mass == pytest.approx(0.5, rel=1e-5)
+    assert type_ii.center_of_mass.x == pytest.approx(2 / 3, rel=1e-5)
+    assert type_ii.center_of_mass.y == pytest.approx(1 / 3, rel=1e-5)
+
+
+def test_function_2d_mass_properties_over_polar_region():
+    density = make_function_2d(lambda x, y: 1)
+
+    properties = density.mass_properties_polar(
+        (0, 2 * math.pi),
+        lambda theta: 0,
+        lambda theta: 2,
+        theta_segments=32,
+        r_segments=400,
+    )
+
+    assert properties.mass == pytest.approx(4 * math.pi)
+    assert properties.center_of_mass.x == pytest.approx(0, abs=1e-15)
+    assert properties.center_of_mass.y == pytest.approx(0, abs=1e-15)
+    assert properties.moment_of_inertia_x == pytest.approx(4 * math.pi, rel=1e-5)
+    assert properties.moment_of_inertia_y == pytest.approx(4 * math.pi, rel=1e-5)
+    assert properties.polar_moment_of_inertia == pytest.approx(8 * math.pi, rel=1e-5)
+
+
 def test_function_2d_chain_rule_for_one_parameter_path():
     function = make_function_2d(lambda x, y: x**2 * y + y)
 
@@ -410,6 +476,94 @@ def test_function_3d_triple_integral_over_spherical_region():
     ) == pytest.approx(4 * math.pi / 5, rel=5e-4)
 
 
+def test_function_3d_mass_properties_over_box():
+    density = make_function_3d(lambda x, y, z: 1)
+
+    properties = density.mass_properties_over_box(
+        (0, 1),
+        (0, 1),
+        (0, 1),
+        x_segments=40,
+        y_segments=40,
+        z_segments=40,
+    )
+
+    assert properties.mass == pytest.approx(1)
+    assert properties.center_of_mass.x == pytest.approx(0.5)
+    assert properties.center_of_mass.y == pytest.approx(0.5)
+    assert properties.center_of_mass.z == pytest.approx(0.5)
+    assert properties.first_moment_yz == pytest.approx(0.5)
+    assert properties.first_moment_xz == pytest.approx(0.5)
+    assert properties.first_moment_xy == pytest.approx(0.5)
+    assert properties.moment_of_inertia_x == pytest.approx(2 / 3, rel=5e-4)
+    assert properties.moment_of_inertia_y == pytest.approx(2 / 3, rel=5e-4)
+    assert properties.moment_of_inertia_z == pytest.approx(2 / 3, rel=5e-4)
+    assert properties.moment_of_inertia_origin == pytest.approx(1, rel=5e-4)
+    assert properties.as_text() == "mass = 1, center = (0.5, 0.5, 0.5)"
+
+
+def test_function_3d_mass_properties_over_iterated_region():
+    density = make_function_3d(lambda x, y, z: 1)
+
+    properties = density.mass_properties_iterated(
+        (0, 1),
+        lambda x: 0,
+        lambda x: x,
+        lambda x, y: 0,
+        lambda x, y: y,
+        x_segments=400,
+        y_segments=40,
+        z_segments=1,
+    )
+
+    assert properties.mass == pytest.approx(1 / 6, rel=1e-5)
+    assert properties.center_of_mass.x == pytest.approx(3 / 4, rel=1e-5)
+    assert properties.center_of_mass.y == pytest.approx(1 / 2, rel=5e-4)
+    assert properties.center_of_mass.z == pytest.approx(1 / 4, rel=5e-4)
+
+
+def test_function_3d_mass_properties_over_cylindrical_region():
+    density = make_function_3d(lambda x, y, z: 1)
+
+    properties = density.mass_properties_cylindrical(
+        (0, 2 * math.pi),
+        lambda theta: 0,
+        lambda theta: 1,
+        lambda theta, radius: 0,
+        lambda theta, radius: 2,
+        theta_segments=16,
+        r_segments=400,
+        z_segments=1,
+    )
+
+    assert properties.mass == pytest.approx(2 * math.pi)
+    assert properties.center_of_mass.x == pytest.approx(0, abs=1e-15)
+    assert properties.center_of_mass.y == pytest.approx(0, abs=1e-15)
+    assert properties.center_of_mass.z == pytest.approx(1)
+    assert properties.moment_of_inertia_z == pytest.approx(math.pi, rel=1e-5)
+
+
+def test_function_3d_mass_properties_over_spherical_region():
+    density = make_function_3d(lambda x, y, z: 1)
+
+    properties = density.mass_properties_spherical(
+        (0, 2 * math.pi),
+        lambda theta: 0,
+        lambda theta: math.pi,
+        lambda theta, phi: 0,
+        lambda theta, phi: 1,
+        theta_segments=16,
+        phi_segments=80,
+        rho_segments=80,
+    )
+
+    assert properties.mass == pytest.approx(4 * math.pi / 3, rel=1e-3)
+    assert properties.center_of_mass.x == pytest.approx(0, abs=1e-12)
+    assert properties.center_of_mass.y == pytest.approx(0, abs=1e-12)
+    assert properties.center_of_mass.z == pytest.approx(0, abs=1e-12)
+    assert properties.moment_of_inertia_z == pytest.approx(8 * math.pi / 15, rel=1e-3)
+
+
 def test_function_3d_classifies_and_finds_critical_points():
     minimum = make_function_3d(lambda x, y, z: (x - 1) ** 2 + (y + 1) ** 2 + z**2)
     maximum = make_function_3d(lambda x, y, z: -(x**2) - y**2 - z**2)
@@ -530,7 +684,9 @@ def test_zero_direction_and_zero_gradient_raise_value_error():
 
 def test_limit_helpers_validate_inputs():
     function = make_function_2d(lambda x, y: x + y)
+    zero_density = make_function_2d(lambda x, y: 0)
     function_3d = make_function_3d(lambda x, y, z: x + y + z)
+    zero_density_3d = make_function_3d(lambda x, y, z: 0)
 
     with pytest.raises(ValueError, match="tolerance"):
         function.limit_at(0, 0, tolerance=0)
@@ -566,6 +722,8 @@ def test_limit_helpers_validate_inputs():
             lambda theta: -1,
             lambda theta: 1,
         )
+    with pytest.raises(ValueError, match="Mass"):
+        zero_density.mass_properties_over_rectangle((0, 1), (0, 1))
     with pytest.raises(ValueError, match="z_segments"):
         function_3d.triple_integral_over_box(
             (0, 1),
@@ -606,3 +764,5 @@ def test_limit_helpers_validate_inputs():
             lambda theta, phi: -1,
             lambda theta, phi: 1,
         )
+    with pytest.raises(ValueError, match="Mass"):
+        zero_density_3d.mass_properties_over_box((0, 1), (0, 1), (0, 1))

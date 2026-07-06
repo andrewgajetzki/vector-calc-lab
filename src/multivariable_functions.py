@@ -12,6 +12,8 @@ from src.vectors import Point2D, Point3D, Vector2D, Vector3D
 
 NumberFunction2D = Callable[[float, float], float]
 NumberFunction3D = Callable[[float, float, float], float]
+Integrator2D = Callable[[NumberFunction2D], float]
+Integrator3D = Callable[[NumberFunction3D], float]
 
 
 @dataclass(frozen=True)
@@ -61,6 +63,51 @@ class FunctionPoint3D:
         return (
             f"f({_format_number(self.point.x)}, {_format_number(self.point.y)}, "
             f"{_format_number(self.point.z)}) = {_format_number(self.value)}"
+        )
+
+
+@dataclass(frozen=True)
+class MassProperties2D:
+    """Mass properties for a lamina with density ``delta(x, y)``."""
+
+    mass: float
+    center_of_mass: Point2D
+    first_moment_x: float
+    first_moment_y: float
+    moment_of_inertia_x: float
+    moment_of_inertia_y: float
+    polar_moment_of_inertia: float
+
+    def as_text(self) -> str:
+        """Return a compact human-readable summary."""
+        return (
+            f"mass = {_format_number(self.mass)}, "
+            f"center = ({_format_number(self.center_of_mass.x)}, "
+            f"{_format_number(self.center_of_mass.y)})"
+        )
+
+
+@dataclass(frozen=True)
+class MassProperties3D:
+    """Mass properties for a solid with density ``rho(x, y, z)``."""
+
+    mass: float
+    center_of_mass: Point3D
+    first_moment_yz: float
+    first_moment_xz: float
+    first_moment_xy: float
+    moment_of_inertia_x: float
+    moment_of_inertia_y: float
+    moment_of_inertia_z: float
+    moment_of_inertia_origin: float
+
+    def as_text(self) -> str:
+        """Return a compact human-readable summary."""
+        return (
+            f"mass = {_format_number(self.mass)}, "
+            f"center = ({_format_number(self.center_of_mass.x)}, "
+            f"{_format_number(self.center_of_mass.y)}, "
+            f"{_format_number(self.center_of_mass.z)})"
         )
 
 
@@ -400,6 +447,102 @@ class ScalarFunction2D:
             r_upper,
             theta_segments,
             r_segments,
+        )
+
+    def mass_properties_over_rectangle(
+        self,
+        x_bounds: tuple[float, float],
+        y_bounds: tuple[float, float],
+        x_segments: int = 100,
+        y_segments: int = 100,
+    ) -> MassProperties2D:
+        """Approximate mass properties for a lamina over a rectangle."""
+        x_bounds = _validate_bounds(x_bounds, "x_bounds")
+        y_bounds = _validate_bounds(y_bounds, "y_bounds")
+        return _mass_properties_2d(
+            self.function,
+            lambda integrand: _double_trapezoid_rule(
+                integrand,
+                x_bounds,
+                y_bounds,
+                x_segments,
+                y_segments,
+            ),
+        )
+
+    def mass_properties_type_i(
+        self,
+        x_bounds: tuple[float, float],
+        y_lower: Callable[[float], float],
+        y_upper: Callable[[float], float],
+        x_segments: int = 100,
+        y_segments: int = 100,
+    ) -> MassProperties2D:
+        """Approximate lamina mass properties over ``g1(x) <= y <= g2(x)``."""
+        x_bounds = _validate_bounds(x_bounds, "x_bounds")
+        return _mass_properties_2d(
+            self.function,
+            lambda integrand: _iterated_trapezoid_rule(
+                x_bounds,
+                y_lower,
+                y_upper,
+                integrand,
+                x_segments,
+                y_segments,
+                "x_segments",
+                "y_segments",
+                "y_bounds",
+            ),
+        )
+
+    def mass_properties_type_ii(
+        self,
+        y_bounds: tuple[float, float],
+        x_lower: Callable[[float], float],
+        x_upper: Callable[[float], float],
+        y_segments: int = 100,
+        x_segments: int = 100,
+    ) -> MassProperties2D:
+        """Approximate lamina mass properties over ``h1(y) <= x <= h2(y)``."""
+        y_bounds = _validate_bounds(y_bounds, "y_bounds")
+        return _mass_properties_2d(
+            self.function,
+            lambda integrand: _iterated_trapezoid_rule(
+                y_bounds,
+                x_lower,
+                x_upper,
+                lambda y, x: integrand(x, y),
+                y_segments,
+                x_segments,
+                "y_segments",
+                "x_segments",
+                "x_bounds",
+            ),
+        )
+
+    def mass_properties_polar(
+        self,
+        theta_bounds: tuple[float, float],
+        r_lower: Callable[[float], float],
+        r_upper: Callable[[float], float],
+        theta_segments: int = 100,
+        r_segments: int = 100,
+    ) -> MassProperties2D:
+        """Approximate lamina mass properties over a polar-coordinate region."""
+        theta_bounds = _validate_bounds(theta_bounds, "theta_bounds")
+        return _mass_properties_2d(
+            self.function,
+            lambda integrand: _polar_trapezoid_rule(
+                lambda theta, radius: integrand(
+                    radius * math.cos(theta),
+                    radius * math.sin(theta),
+                ),
+                theta_bounds,
+                r_lower,
+                r_upper,
+                theta_segments,
+                r_segments,
+            ),
         )
 
     def hessian(
@@ -882,6 +1025,124 @@ class ScalarFunction3D:
             theta_segments,
             phi_segments,
             rho_segments,
+        )
+
+    def mass_properties_over_box(
+        self,
+        x_bounds: tuple[float, float],
+        y_bounds: tuple[float, float],
+        z_bounds: tuple[float, float],
+        x_segments: int = 30,
+        y_segments: int = 30,
+        z_segments: int = 30,
+    ) -> MassProperties3D:
+        """Approximate mass properties for a solid over a rectangular box."""
+        x_bounds = _validate_bounds(x_bounds, "x_bounds")
+        y_bounds = _validate_bounds(y_bounds, "y_bounds")
+        z_bounds = _validate_bounds(z_bounds, "z_bounds")
+        return _mass_properties_3d(
+            self.function,
+            lambda integrand: _triple_trapezoid_rule(
+                integrand,
+                x_bounds,
+                y_bounds,
+                z_bounds,
+                x_segments,
+                y_segments,
+                z_segments,
+            ),
+        )
+
+    def mass_properties_iterated(
+        self,
+        x_bounds: tuple[float, float],
+        y_lower: Callable[[float], float],
+        y_upper: Callable[[float], float],
+        z_lower: Callable[[float, float], float],
+        z_upper: Callable[[float, float], float],
+        x_segments: int = 30,
+        y_segments: int = 30,
+        z_segments: int = 30,
+    ) -> MassProperties3D:
+        """Approximate solid mass properties over a nested ``dz dy dx`` region."""
+        x_bounds = _validate_bounds(x_bounds, "x_bounds")
+        return _mass_properties_3d(
+            self.function,
+            lambda integrand: _iterated_triple_trapezoid_rule(
+                integrand,
+                x_bounds,
+                y_lower,
+                y_upper,
+                z_lower,
+                z_upper,
+                x_segments,
+                y_segments,
+                z_segments,
+            ),
+        )
+
+    def mass_properties_cylindrical(
+        self,
+        theta_bounds: tuple[float, float],
+        r_lower: Callable[[float], float],
+        r_upper: Callable[[float], float],
+        z_lower: Callable[[float, float], float],
+        z_upper: Callable[[float, float], float],
+        theta_segments: int = 30,
+        r_segments: int = 30,
+        z_segments: int = 30,
+    ) -> MassProperties3D:
+        """Approximate solid mass properties over a cylindrical-coordinate region."""
+        theta_bounds = _validate_bounds(theta_bounds, "theta_bounds")
+        return _mass_properties_3d(
+            self.function,
+            lambda integrand: _cylindrical_trapezoid_rule(
+                lambda theta, radius, z: integrand(
+                    radius * math.cos(theta),
+                    radius * math.sin(theta),
+                    z,
+                ),
+                theta_bounds,
+                r_lower,
+                r_upper,
+                z_lower,
+                z_upper,
+                theta_segments,
+                r_segments,
+                z_segments,
+            ),
+        )
+
+    def mass_properties_spherical(
+        self,
+        theta_bounds: tuple[float, float],
+        phi_lower: Callable[[float], float],
+        phi_upper: Callable[[float], float],
+        rho_lower: Callable[[float, float], float],
+        rho_upper: Callable[[float, float], float],
+        theta_segments: int = 30,
+        phi_segments: int = 30,
+        rho_segments: int = 30,
+    ) -> MassProperties3D:
+        """Approximate solid mass properties over a spherical-coordinate region."""
+        theta_bounds = _validate_bounds(theta_bounds, "theta_bounds")
+        return _mass_properties_3d(
+            self.function,
+            lambda integrand: _spherical_trapezoid_rule(
+                lambda theta, phi, rho: integrand(
+                    rho * math.sin(phi) * math.cos(theta),
+                    rho * math.sin(phi) * math.sin(theta),
+                    rho * math.cos(phi),
+                ),
+                theta_bounds,
+                phi_lower,
+                phi_upper,
+                rho_lower,
+                rho_upper,
+                theta_segments,
+                phi_segments,
+                rho_segments,
+            ),
         )
 
     def level_surface_tangent_plane(
@@ -1597,6 +1858,72 @@ def _spherical_trapezoid_rule(
         total += theta_weight * phi_total * phi_step
 
     return total * theta_step
+
+
+def _mass_properties_2d(
+    density: NumberFunction2D,
+    integrate: Integrator2D,
+) -> MassProperties2D:
+    mass = integrate(density)
+    if math.isclose(mass, 0.0, abs_tol=1e-12):
+        raise ValueError("Mass must be nonzero to compute center of mass.")
+
+    first_moment_x = integrate(lambda x, y: y * density(x, y))
+    first_moment_y = integrate(lambda x, y: x * density(x, y))
+    moment_of_inertia_x = integrate(lambda x, y: y**2 * density(x, y))
+    moment_of_inertia_y = integrate(lambda x, y: x**2 * density(x, y))
+    return MassProperties2D(
+        mass=mass,
+        center_of_mass=Point2D(
+            first_moment_y / mass,
+            first_moment_x / mass,
+        ),
+        first_moment_x=first_moment_x,
+        first_moment_y=first_moment_y,
+        moment_of_inertia_x=moment_of_inertia_x,
+        moment_of_inertia_y=moment_of_inertia_y,
+        polar_moment_of_inertia=moment_of_inertia_x + moment_of_inertia_y,
+    )
+
+
+def _mass_properties_3d(
+    density: NumberFunction3D,
+    integrate: Integrator3D,
+) -> MassProperties3D:
+    mass = integrate(density)
+    if math.isclose(mass, 0.0, abs_tol=1e-12):
+        raise ValueError("Mass must be nonzero to compute center of mass.")
+
+    first_moment_yz = integrate(lambda x, y, z: x * density(x, y, z))
+    first_moment_xz = integrate(lambda x, y, z: y * density(x, y, z))
+    first_moment_xy = integrate(lambda x, y, z: z * density(x, y, z))
+    moment_of_inertia_x = integrate(
+        lambda x, y, z: (y**2 + z**2) * density(x, y, z)
+    )
+    moment_of_inertia_y = integrate(
+        lambda x, y, z: (x**2 + z**2) * density(x, y, z)
+    )
+    moment_of_inertia_z = integrate(
+        lambda x, y, z: (x**2 + y**2) * density(x, y, z)
+    )
+    moment_of_inertia_origin = integrate(
+        lambda x, y, z: (x**2 + y**2 + z**2) * density(x, y, z)
+    )
+    return MassProperties3D(
+        mass=mass,
+        center_of_mass=Point3D(
+            first_moment_yz / mass,
+            first_moment_xz / mass,
+            first_moment_xy / mass,
+        ),
+        first_moment_yz=first_moment_yz,
+        first_moment_xz=first_moment_xz,
+        first_moment_xy=first_moment_xy,
+        moment_of_inertia_x=moment_of_inertia_x,
+        moment_of_inertia_y=moment_of_inertia_y,
+        moment_of_inertia_z=moment_of_inertia_z,
+        moment_of_inertia_origin=moment_of_inertia_origin,
+    )
 
 
 def _validate_segments(segments: int, name: str) -> None:

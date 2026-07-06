@@ -64,8 +64,8 @@ They approximate multivariable limits, continuity, partial derivatives,
 gradients, directional derivatives, chain-rule derivatives, tangent planes, and
 linear approximations. They also estimate double integrals over rectangular and
 general Type I/Type II regions, triple integrals in rectangular, cylindrical,
-and spherical coordinates, plus local, absolute, and constrained extrema
-numerically.
+and spherical coordinates, centers of mass, moments of inertia, plus local,
+absolute, and constrained extrema numerically.
 
 ```python
 import math
@@ -74,6 +74,7 @@ from src.multivariable_functions import make_function_2d, make_function_3d
 from src.vectors import Vector2D, Vector3D
 
 surface = make_function_2d(lambda x, y: x**2 + 3 * x * y + y**2)
+unit_lamina = make_function_2d(lambda x, y: 1)
 
 print(surface.value_at(1, 2))
 print(surface.partial_x(1, 2))
@@ -98,6 +99,13 @@ print(surface.double_integral_over_rectangle((0, 1), (0, 1)))
 print(surface.double_integral_type_i((0, 1), lambda x: 0, lambda x: x))
 print(surface.double_integral_type_ii((0, 1), lambda y: y, lambda y: 1))
 print(surface.double_integral_polar((0, math.pi / 2), lambda theta: 0, lambda theta: 1))
+print(
+    unit_lamina.mass_properties_polar(
+        (0, 2 * math.pi),
+        lambda theta: 0,
+        lambda theta: 1,
+    ).as_text()
+)
 
 extrema_surface = make_function_2d(lambda x, y: (x - 1)**2 + (y + 2)**2)
 print(extrema_surface.find_critical_points((-3, 3), (-4, 2))[0].as_text())
@@ -172,6 +180,15 @@ print(
         lambda theta, phi: 1,
     )
 )
+print(
+    unit_density.mass_properties_spherical(
+        (0, 2 * math.pi),
+        lambda theta: 0,
+        lambda theta: math.pi,
+        lambda theta, phi: 0,
+        lambda theta, phi: 1,
+    ).as_text()
+)
 
 space_extrema = make_function_3d(lambda x, y, z: x**2 + y**2 + z**2)
 print(space_extrema.classify_critical_point(0, 0, 0))
@@ -203,6 +220,7 @@ Formulas supported:
 - double integrals over rectangular, Type I/Type II, and polar regions
 - triple integrals over rectangular boxes, nested `dz dy dx` regions,
   cylindrical coordinates, and spherical coordinates
+- centers of mass and moments of inertia for laminas and solids
 - second-derivative critical point test for `f(x, y)`
 - Hessian eigenvalue critical point classification for `f(x, y, z)`
 - numerical critical point searches over rectangles and boxes
