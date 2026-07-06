@@ -84,6 +84,7 @@ def run_multivariable_function_demo() -> None:
     path_dependent = make_function_2d(
         lambda x, y: 0 if x == 0 and y == 0 else x * y / (x**2 + y**2)
     )
+    volume_function = make_function_3d(lambda x, y, z: x + y + z)
     level_surface = make_function_3d(lambda x, y, z: x**2 + y**2 + z**2)
 
     print("Functions of Several Variables")
@@ -134,6 +135,10 @@ def run_multivariable_function_demo() -> None:
     print(
         "Double integral over quarter disk 0 <= r <= 1: "
         f"{quarter_disk_integral:.6g}"
+    )
+    print(
+        "Triple integral over [0, 1]^3: "
+        f"{volume_function.triple_integral_over_box((0, 1), (0, 1), (0, 1)):.6g}"
     )
     critical_point = extrema_surface.find_critical_points((-3, 3), (-4, 2))[0]
     rectangle_extrema = extrema_surface.absolute_extrema_on_rectangle((-1, 3), (-3, 1))

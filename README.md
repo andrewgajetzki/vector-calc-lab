@@ -63,8 +63,8 @@ f(x, y, z)
 They approximate multivariable limits, continuity, partial derivatives,
 gradients, directional derivatives, chain-rule derivatives, tangent planes, and
 linear approximations. They also estimate double integrals over rectangular and
-general Type I/Type II regions, plus local, absolute, and constrained extrema
-numerically.
+general Type I/Type II regions, triple integrals, plus local, absolute, and
+constrained extrema numerically.
 
 ```python
 import math
@@ -142,6 +142,16 @@ print(
 print(volume_function.linear_approximation(1, 2, 3, 1.1, 1.9, 3.05))
 print(volume_function.limit_at(1, 2, 3).as_text())
 print(volume_function.is_continuous_at(1, 2, 3))
+print(volume_function.triple_integral_over_box((0, 1), (0, 1), (0, 1)))
+print(
+    volume_function.triple_integral_iterated(
+        (0, 1),
+        lambda x: 0,
+        lambda x: x,
+        lambda x, y: 0,
+        lambda x, y: y,
+    )
+)
 
 space_extrema = make_function_3d(lambda x, y, z: x**2 + y**2 + z**2)
 print(space_extrema.classify_critical_point(0, 0, 0))
@@ -171,6 +181,7 @@ Formulas supported:
 - tangent planes to level surfaces `F(x, y, z) = c`
 - linear approximation and differentials
 - double integrals over rectangular, Type I/Type II, and polar regions
+- triple integrals over rectangular boxes and nested `dz dy dx` regions
 - second-derivative critical point test for `f(x, y)`
 - Hessian eigenvalue critical point classification for `f(x, y, z)`
 - numerical critical point searches over rectangles and boxes

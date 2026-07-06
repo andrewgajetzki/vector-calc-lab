@@ -778,6 +778,54 @@ class ScalarFunction3D:
         gradient = self.gradient(x, y, z, h)
         return gradient.x * dx + gradient.y * dy + gradient.z * dz
 
+    def triple_integral_over_box(
+        self,
+        x_bounds: tuple[float, float],
+        y_bounds: tuple[float, float],
+        z_bounds: tuple[float, float],
+        x_segments: int = 30,
+        y_segments: int = 30,
+        z_segments: int = 30,
+    ) -> float:
+        """Approximate ``integral integral integral f(x, y, z) dV`` over a box."""
+        x_bounds = _validate_bounds(x_bounds, "x_bounds")
+        y_bounds = _validate_bounds(y_bounds, "y_bounds")
+        z_bounds = _validate_bounds(z_bounds, "z_bounds")
+        return _triple_trapezoid_rule(
+            self.function,
+            x_bounds,
+            y_bounds,
+            z_bounds,
+            x_segments,
+            y_segments,
+            z_segments,
+        )
+
+    def triple_integral_iterated(
+        self,
+        x_bounds: tuple[float, float],
+        y_lower: Callable[[float], float],
+        y_upper: Callable[[float], float],
+        z_lower: Callable[[float, float], float],
+        z_upper: Callable[[float, float], float],
+        x_segments: int = 30,
+        y_segments: int = 30,
+        z_segments: int = 30,
+    ) -> float:
+        """Approximate a nested ``dz dy dx`` triple integral."""
+        x_bounds = _validate_bounds(x_bounds, "x_bounds")
+        return _iterated_triple_trapezoid_rule(
+            self.function,
+            x_bounds,
+            y_lower,
+            y_upper,
+            z_lower,
+            z_upper,
+            x_segments,
+            y_segments,
+            z_segments,
+        )
+
     def level_surface_tangent_plane(
         self,
         x: float,
@@ -1304,6 +1352,90 @@ def _polar_trapezoid_rule(
         total += theta_weight * r_total * r_step
 
     return total * theta_step
+
+
+def _triple_trapezoid_rule(
+    function: NumberFunction3D,
+    x_bounds: tuple[float, float],
+    y_bounds: tuple[float, float],
+    z_bounds: tuple[float, float],
+    x_segments: int,
+    y_segments: int,
+    z_segments: int,
+) -> float:
+    _validate_segments(x_segments, "x_segments")
+    _validate_segments(y_segments, "y_segments")
+    _validate_segments(z_segments, "z_segments")
+
+    x_start, x_stop = x_bounds
+    y_start, y_stop = y_bounds
+    z_start, z_stop = z_bounds
+    x_step = (x_stop - x_start) / x_segments
+    y_step = (y_stop - y_start) / y_segments
+    z_step = (z_stop - z_start) / z_segments
+    total = 0.0
+
+    for x_index in range(x_segments + 1):
+        x = x_start + x_index * x_step
+        x_weight = 0.5 if x_index in (0, x_segments) else 1.0
+        for y_index in range(y_segments + 1):
+            y = y_start + y_index * y_step
+            y_weight = 0.5 if y_index in (0, y_segments) else 1.0
+            for z_index in range(z_segments + 1):
+                z = z_start + z_index * z_step
+                z_weight = 0.5 if z_index in (0, z_segments) else 1.0
+                total += x_weight * y_weight * z_weight * function(x, y, z)
+
+    return total * x_step * y_step * z_step
+
+
+def _iterated_triple_trapezoid_rule(
+    function: NumberFunction3D,
+    x_bounds: tuple[float, float],
+    y_lower: Callable[[float], float],
+    y_upper: Callable[[float], float],
+    z_lower: Callable[[float, float], float],
+    z_upper: Callable[[float, float], float],
+    x_segments: int,
+    y_segments: int,
+    z_segments: int,
+) -> float:
+    _validate_segments(x_segments, "x_segments")
+    _validate_segments(y_segments, "y_segments")
+    _validate_segments(z_segments, "z_segments")
+
+    x_start, x_stop = x_bounds
+    x_step = (x_stop - x_start) / x_segments
+    total = 0.0
+
+    for x_index in range(x_segments + 1):
+        x = x_start + x_index * x_step
+        x_weight = 0.5 if x_index in (0, x_segments) else 1.0
+        y_start = y_lower(x)
+        y_stop = y_upper(x)
+        _validate_bounds((y_start, y_stop), "y_bounds")
+
+        y_step = (y_stop - y_start) / y_segments
+        y_total = 0.0
+        for y_index in range(y_segments + 1):
+            y = y_start + y_index * y_step
+            y_weight = 0.5 if y_index in (0, y_segments) else 1.0
+            z_start = z_lower(x, y)
+            z_stop = z_upper(x, y)
+            _validate_bounds((z_start, z_stop), "z_bounds")
+
+            z_step = (z_stop - z_start) / z_segments
+            z_total = 0.0
+            for z_index in range(z_segments + 1):
+                z = z_start + z_index * z_step
+                z_weight = 0.5 if z_index in (0, z_segments) else 1.0
+                z_total += z_weight * function(x, y, z)
+
+            y_total += y_weight * z_total * z_step
+
+        total += x_weight * y_total * y_step
+
+    return total * x_step
 
 
 def _validate_segments(segments: int, name: str) -> None:

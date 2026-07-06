@@ -281,6 +281,63 @@ def test_function_3d_directional_derivative_linearization_and_differential():
     assert function.differential(1, 2, 3, 0.1, -0.1, 0.05) == pytest.approx(1.35)
 
 
+def test_function_3d_triple_integral_over_box():
+    constant = make_function_3d(lambda x, y, z: 2)
+    linear = make_function_3d(lambda x, y, z: x + y + z)
+    quadratic = make_function_3d(lambda x, y, z: x**2 + y**2 + z**2)
+
+    assert constant.triple_integral_over_box(
+        (0, 2),
+        (0, 3),
+        (0, 4),
+        x_segments=1,
+        y_segments=1,
+        z_segments=1,
+    ) == pytest.approx(48)
+    assert linear.triple_integral_over_box(
+        (0, 1),
+        (0, 1),
+        (0, 1),
+        x_segments=3,
+        y_segments=4,
+        z_segments=5,
+    ) == pytest.approx(1.5)
+    assert quadratic.triple_integral_over_box(
+        (0, 1),
+        (0, 1),
+        (0, 1),
+        x_segments=50,
+        y_segments=50,
+        z_segments=50,
+    ) == pytest.approx(1, rel=3e-4)
+
+
+def test_function_3d_triple_integral_over_iterated_region():
+    constant = make_function_3d(lambda x, y, z: 1)
+    linear = make_function_3d(lambda x, y, z: x + y + z)
+
+    assert constant.triple_integral_iterated(
+        (0, 1),
+        lambda x: 0,
+        lambda x: x,
+        lambda x, y: 0,
+        lambda x, y: y,
+        x_segments=400,
+        y_segments=4,
+        z_segments=1,
+    ) == pytest.approx(1 / 6, rel=1e-5)
+    assert linear.triple_integral_iterated(
+        (0, 1),
+        lambda x: 0,
+        lambda x: x,
+        lambda x, y: 0,
+        lambda x, y: 1,
+        x_segments=400,
+        y_segments=4,
+        z_segments=1,
+    ) == pytest.approx(0.75, rel=1e-5)
+
+
 def test_function_3d_classifies_and_finds_critical_points():
     minimum = make_function_3d(lambda x, y, z: (x - 1) ** 2 + (y + 1) ** 2 + z**2)
     maximum = make_function_3d(lambda x, y, z: -(x**2) - y**2 - z**2)
@@ -401,6 +458,7 @@ def test_zero_direction_and_zero_gradient_raise_value_error():
 
 def test_limit_helpers_validate_inputs():
     function = make_function_2d(lambda x, y: x + y)
+    function_3d = make_function_3d(lambda x, y, z: x + y + z)
 
     with pytest.raises(ValueError, match="tolerance"):
         function.limit_at(0, 0, tolerance=0)
@@ -435,4 +493,19 @@ def test_limit_helpers_validate_inputs():
             (0, 1),
             lambda theta: -1,
             lambda theta: 1,
+        )
+    with pytest.raises(ValueError, match="z_segments"):
+        function_3d.triple_integral_over_box(
+            (0, 1),
+            (0, 1),
+            (0, 1),
+            z_segments=0,
+        )
+    with pytest.raises(ValueError, match="z_bounds"):
+        function_3d.triple_integral_iterated(
+            (0, 1),
+            lambda x: 0,
+            lambda x: 1,
+            lambda x, y: 1,
+            lambda x, y: 0,
         )
