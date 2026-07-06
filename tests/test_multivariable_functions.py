@@ -99,6 +99,31 @@ def test_function_2d_directional_derivative_tangent_plane_and_linearization():
     assert function.differential(1, 2, 0.1, -0.1) == pytest.approx(0.1)
 
 
+def test_function_2d_double_integral_over_rectangle():
+    constant = make_function_2d(lambda x, y: 3)
+    linear = make_function_2d(lambda x, y: x + y)
+    quadratic = make_function_2d(lambda x, y: x**2 + y**2)
+
+    assert constant.double_integral_over_rectangle(
+        (0, 2),
+        (1, 4),
+        x_segments=1,
+        y_segments=1,
+    ) == pytest.approx(18)
+    assert linear.double_integral_over_rectangle(
+        (0, 2),
+        (0, 3),
+        x_segments=3,
+        y_segments=4,
+    ) == pytest.approx(15)
+    assert quadratic.double_integral_over_rectangle(
+        (0, 1),
+        (0, 1),
+        x_segments=100,
+        y_segments=100,
+    ) == pytest.approx(2 / 3, rel=1e-4)
+
+
 def test_function_2d_chain_rule_for_one_parameter_path():
     function = make_function_2d(lambda x, y: x**2 * y + y)
 
@@ -314,3 +339,7 @@ def test_limit_helpers_validate_inputs():
         function.limit_at(0, 0, tolerance=0)
     with pytest.raises(ValueError, match="side"):
         function.limit_along_path(lambda t: t, lambda t: t, side="later")
+    with pytest.raises(ValueError, match="x_segments"):
+        function.double_integral_over_rectangle((0, 1), (0, 1), x_segments=0)
+    with pytest.raises(ValueError, match="x_bounds"):
+        function.double_integral_over_rectangle((1, 0), (0, 1))

@@ -62,8 +62,8 @@ f(x, y, z)
 
 They approximate multivariable limits, continuity, partial derivatives,
 gradients, directional derivatives, chain-rule derivatives, tangent planes, and
-linear approximations. They also estimate local, absolute, and constrained
-extrema numerically.
+linear approximations. They also estimate rectangular double integrals and
+local, absolute, and constrained extrema numerically.
 
 ```python
 from src.multivariable_functions import make_function_2d, make_function_3d
@@ -90,6 +90,7 @@ print(
 print(surface.tangent_plane(1, 2).as_text())
 print(surface.linear_approximation(1, 2, 1.1, 1.9))
 print(surface.differential(1, 2, dx=0.1, dy=-0.1))
+print(surface.double_integral_over_rectangle((0, 1), (0, 1)))
 
 extrema_surface = make_function_2d(lambda x, y: (x - 1)**2 + (y + 2)**2)
 print(extrema_surface.find_critical_points((-3, 3), (-4, 2))[0].as_text())
@@ -163,14 +164,15 @@ Formulas supported:
 - tangent planes to graphs `z = f(x, y)`
 - tangent planes to level surfaces `F(x, y, z) = c`
 - linear approximation and differentials
+- double integrals over rectangular regions
 - second-derivative critical point test for `f(x, y)`
 - Hessian eigenvalue critical point classification for `f(x, y, z)`
 - numerical critical point searches over rectangles and boxes
 - absolute extrema estimates over rectangles and boxes
 - Lagrange-multiplier extrema for one equality constraint
 
-Limit, continuity, critical point, and extrema searches provide numerical
-evidence, not symbolic proofs.
+Limit, continuity, integration, critical point, and extrema searches provide
+numerical evidence, not symbolic proofs.
 
 ## Vector-Valued Functions and Space Curves
 

@@ -318,6 +318,24 @@ class ScalarFunction2D:
         gradient = self.gradient(x, y, h)
         return gradient.x * dx + gradient.y * dy
 
+    def double_integral_over_rectangle(
+        self,
+        x_bounds: tuple[float, float],
+        y_bounds: tuple[float, float],
+        x_segments: int = 100,
+        y_segments: int = 100,
+    ) -> float:
+        """Approximate ``integral integral f(x, y) dA`` over a rectangle."""
+        x_bounds = _validate_bounds(x_bounds, "x_bounds")
+        y_bounds = _validate_bounds(y_bounds, "y_bounds")
+        return _double_trapezoid_rule(
+            self.function,
+            x_bounds,
+            y_bounds,
+            x_segments,
+            y_segments,
+        )
+
     def hessian(
         self,
         x: float,
@@ -1120,6 +1138,38 @@ def _linspace(bounds: tuple[float, float], count: int) -> tuple[float, ...]:
     lower, upper = bounds
     step = (upper - lower) / (count - 1)
     return tuple(lower + index * step for index in range(count))
+
+
+def _double_trapezoid_rule(
+    function: NumberFunction2D,
+    x_bounds: tuple[float, float],
+    y_bounds: tuple[float, float],
+    x_segments: int,
+    y_segments: int,
+) -> float:
+    _validate_segments(x_segments, "x_segments")
+    _validate_segments(y_segments, "y_segments")
+
+    x_start, x_stop = x_bounds
+    y_start, y_stop = y_bounds
+    x_step = (x_stop - x_start) / x_segments
+    y_step = (y_stop - y_start) / y_segments
+    total = 0.0
+
+    for x_index in range(x_segments + 1):
+        x = x_start + x_index * x_step
+        x_weight = 0.5 if x_index in (0, x_segments) else 1.0
+        for y_index in range(y_segments + 1):
+            y = y_start + y_index * y_step
+            y_weight = 0.5 if y_index in (0, y_segments) else 1.0
+            total += x_weight * y_weight * function(x, y)
+
+    return total * x_step * y_step
+
+
+def _validate_segments(segments: int, name: str) -> None:
+    if segments < 1:
+        raise ValueError(f"{name} must be at least 1.")
 
 
 def _within_bounds(

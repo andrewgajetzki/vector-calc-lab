@@ -118,6 +118,10 @@ def run_multivariable_function_demo() -> None:
         "Linear approximation at (1.1, 1.9): "
         f"{surface.linear_approximation(1, 2, 1.1, 1.9):.6g}"
     )
+    print(
+        "Double integral over [0, 1] x [0, 1]: "
+        f"{surface.double_integral_over_rectangle((0, 1), (0, 1)):.6g}"
+    )
     critical_point = extrema_surface.find_critical_points((-3, 3), (-4, 2))[0]
     rectangle_extrema = extrema_surface.absolute_extrema_on_rectangle((-1, 3), (-3, 1))
     constrained_extrema = constrained_surface.lagrange_extrema(
