@@ -253,6 +253,56 @@ Formulas supported:
 Limit, continuity, integration, critical point, and extrema searches provide
 numerical evidence, not symbolic proofs.
 
+## Vector Fields
+
+The vector-field tools work with plane and space vector fields:
+
+```text
+F(x, y) = <P(x, y), Q(x, y)>
+F(x, y, z) = <P(x, y, z), Q(x, y, z), R(x, y, z)>
+```
+
+They evaluate and sample vector fields, compute magnitudes and unit directions,
+and approximate the derivative quantities used at the start of vector calculus.
+
+```python
+from src.vector_fields import make_vector_field_2d, make_vector_field_3d
+
+plane_field = make_vector_field_2d(
+    lambda x, y: x * y,
+    lambda x, y: x**2 - y,
+)
+
+print(plane_field.value_at(2, 3).as_text())
+print(plane_field.magnitude_at(2, 3))
+print(plane_field.unit_at(2, 3).as_text())
+print(plane_field.jacobian_matrix(2, 3))
+print(plane_field.divergence(2, 3))
+print(plane_field.curl_z(2, 3))
+
+space_field = make_vector_field_3d(
+    lambda x, y, z: x * y,
+    lambda x, y, z: y * z,
+    lambda x, y, z: z * x,
+)
+
+print(space_field.value_at(2, 3, 4).as_text())
+print(space_field.jacobian_matrix(2, 3, 4))
+print(space_field.divergence(2, 3, 4))
+print(space_field.curl(2, 3, 4).as_text())
+```
+
+Formulas supported:
+
+- field evaluation in the plane and in space
+- rectangular grid sampling
+- vector-field magnitudes and unit directions
+- Jacobian matrices of component partial derivatives
+- plane divergence `P_x + Q_y`
+- plane scalar curl `Q_x - P_y`
+- space divergence `P_x + Q_y + R_z`
+- space curl `<R_y - Q_z, P_z - R_x, Q_x - P_y>`
+
 ## Vector-Valued Functions and Space Curves
 
 The space-curve tools work with vector-valued functions of the form:

@@ -22,6 +22,7 @@ from src.space_geometry import (
     make_plane,
     plane_from_scalar_equation,
 )
+from src.vector_fields import make_vector_field_2d, make_vector_field_3d
 from src.vectors import Point2D, Point3D, make_vector2d, make_vector3d
 
 
@@ -30,6 +31,8 @@ def run_demo() -> None:
     run_vector_demo()
     print()
     run_multivariable_function_demo()
+    print()
+    run_vector_field_demo()
     print()
     run_space_curve_demo()
     print()
@@ -220,6 +223,35 @@ def run_multivariable_function_demo() -> None:
         "Tangent plane to x^2 + y^2 + z^2 = 9 at (1, 2, 2): "
         f"{level_surface.level_surface_tangent_plane(1, 2, 2).scalar_equation()}"
     )
+
+
+def run_vector_field_demo() -> None:
+    """Show vector field tools in the plane and in space."""
+    plane_field = make_vector_field_2d(
+        lambda x, y: x * y,
+        lambda x, y: x**2 - y,
+    )
+    space_field = make_vector_field_3d(
+        lambda x, y, z: x * y,
+        lambda x, y, z: y * z,
+        lambda x, y, z: z * x,
+    )
+
+    print("Vector Fields")
+    print()
+    print("Example plane field: F(x, y) = <xy, x^2 - y>")
+    print()
+    print(f"F(2, 3): {plane_field.value_at(2, 3).as_text()}")
+    print(f"|F(2, 3)|: {plane_field.magnitude_at(2, 3):.6g}")
+    print(f"Unit direction at (2, 3): {plane_field.unit_at(2, 3).as_text()}")
+    print(f"Divergence at (2, 3): {plane_field.divergence(2, 3):.6g}")
+    print(f"Scalar curl at (2, 3): {plane_field.curl_z(2, 3):.6g}")
+    print()
+    print("Example space field: F(x, y, z) = <xy, yz, zx>")
+    print()
+    print(f"F(2, 3, 4): {space_field.value_at(2, 3, 4).as_text()}")
+    print(f"Divergence at (2, 3, 4): {space_field.divergence(2, 3, 4):.6g}")
+    print(f"Curl at (2, 3, 4): {space_field.curl(2, 3, 4).as_text()}")
 
 
 def run_space_curve_demo() -> None:
