@@ -267,7 +267,8 @@ F(x, y, z) = <P(x, y, z), Q(x, y, z), R(x, y, z)>
 They evaluate and sample vector fields, compute magnitudes and unit directions,
 and approximate the derivative quantities used at the start of vector calculus.
 They also approximate oriented line integrals, check for conservative fields,
-and estimate potential differences.
+estimate potential differences, and apply Green's theorem over rectangular,
+Type I, and Type II plane regions.
 
 ```python
 from src.vectors import Point2D, Point3D
@@ -285,6 +286,11 @@ print(plane_field.jacobian_matrix(2, 3))
 print(plane_field.divergence(2, 3))
 print(plane_field.curl_z(2, 3))
 print(plane_field.line_integral(lambda t: t, lambda t: t, (0, 1)))
+
+circulation_field = make_vector_field_2d(lambda x, y: -y, lambda x, y: x)
+source_field = make_vector_field_2d(lambda x, y: x, lambda x, y: y)
+print(circulation_field.greens_theorem_circulation_over_rectangle((0, 2), (0, 3)))
+print(source_field.greens_theorem_flux_over_rectangle((0, 2), (0, 3)))
 
 plane_conservative = make_vector_field_2d(
     lambda x, y: 2 * x * y,
@@ -325,6 +331,8 @@ Formulas supported:
 - space divergence `P_x + Q_y + R_z`
 - space curl `<R_y - Q_z, P_z - R_x, Q_x - P_y>`
 - oriented line integrals `integral_C F dot dr`
+- Green's theorem circulation form `double integral_R (Q_x - P_y) dA`
+- Green's theorem flux form `double integral_R (P_x + Q_y) dA`
 - conservative-field checks by sampled curl values
 - potential differences for conservative fields
 

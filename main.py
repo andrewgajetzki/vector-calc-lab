@@ -240,6 +240,8 @@ def run_vector_field_demo() -> None:
         lambda x, y: x * y,
         lambda x, y: x**2 - y,
     )
+    circulation_field = make_vector_field_2d(lambda x, y: -y, lambda x, y: x)
+    source_field = make_vector_field_2d(lambda x, y: x, lambda x, y: y)
     plane_conservative = make_vector_field_2d(
         lambda x, y: 2 * x * y,
         lambda x, y: x**2 + 3 * y**2,
@@ -267,6 +269,14 @@ def run_vector_field_demo() -> None:
     print(
         "Line integral along r(t)=<t, t>, 0 <= t <= 1: "
         f"{plane_field.line_integral(lambda t: t, lambda t: t, (0, 1)):.6g}"
+    )
+    print(
+        "Green circulation of <-y, x> over [0, 2] x [0, 3]: "
+        f"{circulation_field.greens_theorem_circulation_over_rectangle((0, 2), (0, 3)):.6g}"
+    )
+    print(
+        "Green outward flux of <x, y> over [0, 2] x [0, 3]: "
+        f"{source_field.greens_theorem_flux_over_rectangle((0, 2), (0, 3)):.6g}"
     )
     print(
         "Conservative check for <2xy, x^2 + 3y^2> on [-1, 1]^2: "

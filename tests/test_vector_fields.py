@@ -86,6 +86,64 @@ def test_vector_field_2d_line_integral():
     ) == pytest.approx(2 * math.pi, rel=1e-5)
 
 
+def test_vector_field_2d_greens_theorem_circulation():
+    field = make_vector_field_2d(lambda x, y: -y, lambda x, y: x)
+
+    rectangle_boundary = (
+        field.line_integral(lambda t: t, lambda t: 0, (0, 2), segments=1)
+        + field.line_integral(lambda t: 2, lambda t: t, (0, 3), segments=1)
+        + field.line_integral(lambda t: 2 - t, lambda t: 3, (0, 2), segments=1)
+        + field.line_integral(lambda t: 0, lambda t: 3 - t, (0, 3), segments=1)
+    )
+
+    assert field.greens_theorem_circulation_over_rectangle(
+        (0, 2),
+        (0, 3),
+        x_segments=1,
+        y_segments=1,
+    ) == pytest.approx(12)
+    assert rectangle_boundary == pytest.approx(12)
+    assert field.greens_theorem_circulation_type_i(
+        (0, 1),
+        lambda x: 0,
+        lambda x: x,
+        x_segments=4,
+        y_segments=1,
+    ) == pytest.approx(1)
+    assert field.greens_theorem_circulation_type_ii(
+        (0, 1),
+        lambda y: y,
+        lambda y: 1,
+        y_segments=4,
+        x_segments=1,
+    ) == pytest.approx(1)
+
+
+def test_vector_field_2d_greens_theorem_flux():
+    field = make_vector_field_2d(lambda x, y: x, lambda x, y: y)
+
+    assert field.greens_theorem_flux_over_rectangle(
+        (0, 2),
+        (0, 3),
+        x_segments=1,
+        y_segments=1,
+    ) == pytest.approx(12)
+    assert field.greens_theorem_flux_type_i(
+        (0, 1),
+        lambda x: 0,
+        lambda x: x,
+        x_segments=4,
+        y_segments=1,
+    ) == pytest.approx(1)
+    assert field.greens_theorem_flux_type_ii(
+        (0, 1),
+        lambda y: y,
+        lambda y: 1,
+        y_segments=4,
+        x_segments=1,
+    ) == pytest.approx(1)
+
+
 def test_vector_field_2d_detects_conservative_fields():
     conservative = make_vector_field_2d(
         lambda x, y: 2 * x * y,
@@ -252,6 +310,27 @@ def test_vector_field_validation():
         field_2d.line_integral(lambda t: t, lambda t: t, (0, 1), segments=0)
     with pytest.raises(ValueError, match="h"):
         field_2d.line_integral(lambda t: t, lambda t: t, (0, 1), h=0)
+    with pytest.raises(ValueError, match="x_segments"):
+        field_2d.greens_theorem_circulation_over_rectangle(
+            (0, 1),
+            (0, 1),
+            x_segments=0,
+        )
+    with pytest.raises(ValueError, match="y_bounds"):
+        field_2d.greens_theorem_circulation_type_i(
+            (0, 1),
+            lambda x: 1,
+            lambda x: 0,
+        )
+    with pytest.raises(ValueError, match="y_bounds"):
+        field_2d.greens_theorem_flux_over_rectangle((0, 1), (1, 0))
+    with pytest.raises(ValueError, match="x_segments"):
+        field_2d.greens_theorem_flux_type_ii(
+            (0, 1),
+            lambda y: y,
+            lambda y: 1,
+            x_segments=0,
+        )
     with pytest.raises(ValueError, match="tolerance"):
         field_2d.is_conservative_at(0, 0, tolerance=0)
     with pytest.raises(ValueError, match="x_steps"):
