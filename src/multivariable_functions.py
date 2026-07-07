@@ -14,6 +14,8 @@ NumberFunction2D = Callable[[float, float], float]
 NumberFunction3D = Callable[[float, float, float], float]
 Integrator2D = Callable[[NumberFunction2D], float]
 Integrator3D = Callable[[NumberFunction3D], float]
+Jacobian2D = Callable[[float, float], float]
+Jacobian3D = Callable[[float, float, float], float]
 
 
 @dataclass(frozen=True)
@@ -447,6 +449,46 @@ class ScalarFunction2D:
             r_upper,
             theta_segments,
             r_segments,
+        )
+
+    def double_integral_change_of_variables(
+        self,
+        u_bounds: tuple[float, float],
+        v_bounds: tuple[float, float],
+        x_of_u_v: Callable[[float, float], float],
+        y_of_u_v: Callable[[float, float], float],
+        u_segments: int = 100,
+        v_segments: int = 100,
+        jacobian: Jacobian2D | None = None,
+        h: float = 1e-5,
+    ) -> float:
+        """Approximate a double integral using ``x = x(u, v), y = y(u, v)``."""
+        u_bounds = _validate_bounds(u_bounds, "u_bounds")
+        v_bounds = _validate_bounds(v_bounds, "v_bounds")
+
+        def transformed_integrand(u: float, v: float) -> float:
+            determinant = (
+                jacobian(u, v)
+                if jacobian is not None
+                else _change_of_variables_jacobian_2d(
+                    x_of_u_v,
+                    y_of_u_v,
+                    u,
+                    v,
+                    h,
+                )
+            )
+            return (
+                self.function(x_of_u_v(u, v), y_of_u_v(u, v))
+                * abs(determinant)
+            )
+
+        return _double_trapezoid_rule(
+            transformed_integrand,
+            u_bounds,
+            v_bounds,
+            u_segments,
+            v_segments,
         )
 
     def mass_properties_over_rectangle(
@@ -1027,6 +1069,58 @@ class ScalarFunction3D:
             rho_segments,
         )
 
+    def triple_integral_change_of_variables(
+        self,
+        u_bounds: tuple[float, float],
+        v_bounds: tuple[float, float],
+        w_bounds: tuple[float, float],
+        x_of_u_v_w: Callable[[float, float, float], float],
+        y_of_u_v_w: Callable[[float, float, float], float],
+        z_of_u_v_w: Callable[[float, float, float], float],
+        u_segments: int = 30,
+        v_segments: int = 30,
+        w_segments: int = 30,
+        jacobian: Jacobian3D | None = None,
+        h: float = 1e-5,
+    ) -> float:
+        """Approximate a triple integral under a 3D coordinate transformation."""
+        u_bounds = _validate_bounds(u_bounds, "u_bounds")
+        v_bounds = _validate_bounds(v_bounds, "v_bounds")
+        w_bounds = _validate_bounds(w_bounds, "w_bounds")
+
+        def transformed_integrand(u: float, v: float, w: float) -> float:
+            determinant = (
+                jacobian(u, v, w)
+                if jacobian is not None
+                else _change_of_variables_jacobian_3d(
+                    x_of_u_v_w,
+                    y_of_u_v_w,
+                    z_of_u_v_w,
+                    u,
+                    v,
+                    w,
+                    h,
+                )
+            )
+            return (
+                self.function(
+                    x_of_u_v_w(u, v, w),
+                    y_of_u_v_w(u, v, w),
+                    z_of_u_v_w(u, v, w),
+                )
+                * abs(determinant)
+            )
+
+        return _triple_trapezoid_rule(
+            transformed_integrand,
+            u_bounds,
+            v_bounds,
+            w_bounds,
+            u_segments,
+            v_segments,
+            w_segments,
+        )
+
     def mass_properties_over_box(
         self,
         x_bounds: tuple[float, float],
@@ -1512,6 +1606,61 @@ def _parameter_partials(
     return Vector2D(
         _central_difference(lambda value: function(value, v), u, h),
         _central_difference(lambda value: function(u, value), v, h),
+    )
+
+
+def _parameter_partials_3d(
+    function: Callable[[float, float, float], float],
+    u: float,
+    v: float,
+    w: float,
+    h: float,
+) -> Vector3D:
+    return Vector3D(
+        _central_difference(lambda value: function(value, v, w), u, h),
+        _central_difference(lambda value: function(u, value, w), v, h),
+        _central_difference(lambda value: function(u, v, value), w, h),
+    )
+
+
+def _change_of_variables_jacobian_2d(
+    x_of_u_v: Callable[[float, float], float],
+    y_of_u_v: Callable[[float, float], float],
+    u: float,
+    v: float,
+    h: float,
+) -> float:
+    x_partials = _parameter_partials(x_of_u_v, u, v, h)
+    y_partials = _parameter_partials(y_of_u_v, u, v, h)
+    return x_partials.x * y_partials.y - x_partials.y * y_partials.x
+
+
+def _change_of_variables_jacobian_3d(
+    x_of_u_v_w: Callable[[float, float, float], float],
+    y_of_u_v_w: Callable[[float, float, float], float],
+    z_of_u_v_w: Callable[[float, float, float], float],
+    u: float,
+    v: float,
+    w: float,
+    h: float,
+) -> float:
+    x_partials = _parameter_partials_3d(x_of_u_v_w, u, v, w, h)
+    y_partials = _parameter_partials_3d(y_of_u_v_w, u, v, w, h)
+    z_partials = _parameter_partials_3d(z_of_u_v_w, u, v, w, h)
+    return _determinant_3x3(
+        (
+            (x_partials.x, x_partials.y, x_partials.z),
+            (y_partials.x, y_partials.y, y_partials.z),
+            (z_partials.x, z_partials.y, z_partials.z),
+        )
+    )
+
+
+def _determinant_3x3(matrix: tuple[tuple[float, float, float], ...]) -> float:
+    return (
+        matrix[0][0] * (matrix[1][1] * matrix[2][2] - matrix[1][2] * matrix[2][1])
+        - matrix[0][1] * (matrix[1][0] * matrix[2][2] - matrix[1][2] * matrix[2][0])
+        + matrix[0][2] * (matrix[1][0] * matrix[2][1] - matrix[1][1] * matrix[2][0])
     )
 
 

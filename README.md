@@ -64,8 +64,9 @@ They approximate multivariable limits, continuity, partial derivatives,
 gradients, directional derivatives, chain-rule derivatives, tangent planes, and
 linear approximations. They also estimate double integrals over rectangular and
 general Type I/Type II regions, triple integrals in rectangular, cylindrical,
-and spherical coordinates, centers of mass, moments of inertia, plus local,
-absolute, and constrained extrema numerically.
+and spherical coordinates, changes of variables with Jacobian determinants,
+centers of mass, moments of inertia, plus local, absolute, and constrained
+extrema numerically.
 
 ```python
 import math
@@ -99,6 +100,15 @@ print(surface.double_integral_over_rectangle((0, 1), (0, 1)))
 print(surface.double_integral_type_i((0, 1), lambda x: 0, lambda x: x))
 print(surface.double_integral_type_ii((0, 1), lambda y: y, lambda y: 1))
 print(surface.double_integral_polar((0, math.pi / 2), lambda theta: 0, lambda theta: 1))
+print(
+    unit_lamina.double_integral_change_of_variables(
+        (0, 1),
+        (0, 1),
+        lambda u, v: 2 * u,
+        lambda u, v: 3 * v,
+        jacobian=lambda u, v: 6,
+    )
+)
 print(
     unit_lamina.mass_properties_polar(
         (0, 2 * math.pi),
@@ -153,6 +163,17 @@ print(volume_function.linear_approximation(1, 2, 3, 1.1, 1.9, 3.05))
 print(volume_function.limit_at(1, 2, 3).as_text())
 print(volume_function.is_continuous_at(1, 2, 3))
 print(volume_function.triple_integral_over_box((0, 1), (0, 1), (0, 1)))
+print(
+    unit_density.triple_integral_change_of_variables(
+        (0, 1),
+        (0, 1),
+        (0, 1),
+        lambda u, v, w: 2 * u,
+        lambda u, v, w: 3 * v,
+        lambda u, v, w: 4 * w,
+        jacobian=lambda u, v, w: 24,
+    )
+)
 print(
     volume_function.triple_integral_iterated(
         (0, 1),
@@ -220,6 +241,8 @@ Formulas supported:
 - double integrals over rectangular, Type I/Type II, and polar regions
 - triple integrals over rectangular boxes, nested `dz dy dx` regions,
   cylindrical coordinates, and spherical coordinates
+- change of variables for double and triple integrals with supplied or
+  numerical Jacobian determinants
 - centers of mass and moments of inertia for laminas and solids
 - second-derivative critical point test for `f(x, y)`
 - Hessian eigenvalue critical point classification for `f(x, y, z)`

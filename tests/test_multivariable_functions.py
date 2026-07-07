@@ -191,6 +191,38 @@ def test_function_2d_double_integral_over_polar_region():
     ) == pytest.approx(1 / 6, rel=1e-5)
 
 
+def test_function_2d_double_integral_change_of_variables():
+    constant = make_function_2d(lambda x, y: 1)
+    radial = make_function_2d(lambda x, y: x**2 + y**2)
+
+    assert constant.double_integral_change_of_variables(
+        (0, 1),
+        (0, 1),
+        lambda u, v: 2 * u,
+        lambda u, v: 3 * v,
+        u_segments=1,
+        v_segments=1,
+    ) == pytest.approx(6)
+    assert constant.double_integral_change_of_variables(
+        (0, 1),
+        (0, 1),
+        lambda u, v: u,
+        lambda u, v: -v,
+        jacobian=lambda u, v: -1,
+        u_segments=1,
+        v_segments=1,
+    ) == pytest.approx(1)
+    assert radial.double_integral_change_of_variables(
+        (0, 2 * math.pi),
+        (0, 1),
+        lambda theta, radius: radius * math.cos(theta),
+        lambda theta, radius: radius * math.sin(theta),
+        jacobian=lambda theta, radius: radius,
+        u_segments=32,
+        v_segments=400,
+    ) == pytest.approx(math.pi / 2, rel=1e-5)
+
+
 def test_function_2d_mass_properties_over_rectangle():
     density = make_function_2d(lambda x, y: 2)
 
@@ -476,6 +508,47 @@ def test_function_3d_triple_integral_over_spherical_region():
     ) == pytest.approx(4 * math.pi / 5, rel=5e-4)
 
 
+def test_function_3d_triple_integral_change_of_variables():
+    constant = make_function_3d(lambda x, y, z: 1)
+    radial = make_function_3d(lambda x, y, z: x**2 + y**2 + z**2)
+
+    assert constant.triple_integral_change_of_variables(
+        (0, 1),
+        (0, 1),
+        (0, 1),
+        lambda u, v, w: 2 * u,
+        lambda u, v, w: 3 * v,
+        lambda u, v, w: 4 * w,
+        u_segments=1,
+        v_segments=1,
+        w_segments=1,
+    ) == pytest.approx(24)
+    assert constant.triple_integral_change_of_variables(
+        (0, 1),
+        (0, 1),
+        (0, 1),
+        lambda u, v, w: u,
+        lambda u, v, w: v,
+        lambda u, v, w: -w,
+        jacobian=lambda u, v, w: -1,
+        u_segments=1,
+        v_segments=1,
+        w_segments=1,
+    ) == pytest.approx(1)
+    assert radial.triple_integral_change_of_variables(
+        (0, 2 * math.pi),
+        (0, math.pi),
+        (0, 1),
+        lambda theta, phi, rho: rho * math.sin(phi) * math.cos(theta),
+        lambda theta, phi, rho: rho * math.sin(phi) * math.sin(theta),
+        lambda theta, phi, rho: rho * math.cos(phi),
+        jacobian=lambda theta, phi, rho: rho**2 * math.sin(phi),
+        u_segments=16,
+        v_segments=100,
+        w_segments=400,
+    ) == pytest.approx(4 * math.pi / 5, rel=5e-4)
+
+
 def test_function_3d_mass_properties_over_box():
     density = make_function_3d(lambda x, y, z: 1)
 
@@ -722,6 +795,21 @@ def test_limit_helpers_validate_inputs():
             lambda theta: -1,
             lambda theta: 1,
         )
+    with pytest.raises(ValueError, match="u_bounds"):
+        function.double_integral_change_of_variables(
+            (1, 0),
+            (0, 1),
+            lambda u, v: u,
+            lambda u, v: v,
+        )
+    with pytest.raises(ValueError, match="h"):
+        function.double_integral_change_of_variables(
+            (0, 1),
+            (0, 1),
+            lambda u, v: u,
+            lambda u, v: v,
+            h=0,
+        )
     with pytest.raises(ValueError, match="Mass"):
         zero_density.mass_properties_over_rectangle((0, 1), (0, 1))
     with pytest.raises(ValueError, match="z_segments"):
@@ -763,6 +851,25 @@ def test_limit_helpers_validate_inputs():
             lambda theta: 1,
             lambda theta, phi: -1,
             lambda theta, phi: 1,
+        )
+    with pytest.raises(ValueError, match="w_bounds"):
+        function_3d.triple_integral_change_of_variables(
+            (0, 1),
+            (0, 1),
+            (1, 0),
+            lambda u, v, w: u,
+            lambda u, v, w: v,
+            lambda u, v, w: w,
+        )
+    with pytest.raises(ValueError, match="h"):
+        function_3d.triple_integral_change_of_variables(
+            (0, 1),
+            (0, 1),
+            (0, 1),
+            lambda u, v, w: u,
+            lambda u, v, w: v,
+            lambda u, v, w: w,
+            h=0,
         )
     with pytest.raises(ValueError, match="Mass"):
         zero_density_3d.mass_properties_over_box((0, 1), (0, 1), (0, 1))

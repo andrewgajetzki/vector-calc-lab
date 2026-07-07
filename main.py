@@ -138,6 +138,14 @@ def run_multivariable_function_demo() -> None:
         "Double integral over quarter disk 0 <= r <= 1: "
         f"{quarter_disk_integral:.6g}"
     )
+    transformed_area = unit_lamina.double_integral_change_of_variables(
+        (0, 1),
+        (0, 1),
+        lambda u, v: 2 * u,
+        lambda u, v: 3 * v,
+        jacobian=lambda u, v: 6,
+    )
+    print(f"Change of variables over 2 by 3 rectangle: {transformed_area:.6g}")
     unit_disk_properties = unit_lamina.mass_properties_polar(
         (0, 2 * math.pi),
         lambda theta: 0,
@@ -164,6 +172,16 @@ def run_multivariable_function_demo() -> None:
     )
     print(f"Cylindrical integral over radius 1, height 2: {cylinder_volume:.6g}")
     print(f"Spherical integral over unit ball: {ball_volume:.6g}")
+    transformed_volume = unit_density.triple_integral_change_of_variables(
+        (0, 1),
+        (0, 1),
+        (0, 1),
+        lambda u, v, w: 2 * u,
+        lambda u, v, w: 3 * v,
+        lambda u, v, w: 4 * w,
+        jacobian=lambda u, v, w: 24,
+    )
+    print(f"Change of variables over 2 by 3 by 4 box: {transformed_volume:.6g}")
     unit_ball_properties = unit_density.mass_properties_spherical(
         (0, 2 * math.pi),
         lambda theta: 0,
