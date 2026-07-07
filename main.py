@@ -240,10 +240,19 @@ def run_vector_field_demo() -> None:
         lambda x, y: x * y,
         lambda x, y: x**2 - y,
     )
+    plane_conservative = make_vector_field_2d(
+        lambda x, y: 2 * x * y,
+        lambda x, y: x**2 + 3 * y**2,
+    )
     space_field = make_vector_field_3d(
         lambda x, y, z: x * y,
         lambda x, y, z: y * z,
         lambda x, y, z: z * x,
+    )
+    space_conservative = make_vector_field_3d(
+        lambda x, y, z: y + z,
+        lambda x, y, z: x + z,
+        lambda x, y, z: x + y,
     )
 
     print("Vector Fields")
@@ -259,6 +268,14 @@ def run_vector_field_demo() -> None:
         "Line integral along r(t)=<t, t>, 0 <= t <= 1: "
         f"{plane_field.line_integral(lambda t: t, lambda t: t, (0, 1)):.6g}"
     )
+    print(
+        "Conservative check for <2xy, x^2 + 3y^2> on [-1, 1]^2: "
+        f"{plane_conservative.is_conservative_on_rectangle((-1, 1), (-1, 1))}"
+    )
+    print(
+        "Potential difference from (0, 0) to (2, 1): "
+        f"{plane_conservative.potential_difference(Point2D(0, 0), Point2D(2, 1)):.6g}"
+    )
     print()
     print("Example space field: F(x, y, z) = <xy, yz, zx>")
     print()
@@ -268,6 +285,14 @@ def run_vector_field_demo() -> None:
     print(
         "Line integral along r(t)=<t, t, t>, 0 <= t <= 1: "
         f"{space_field.line_integral(lambda t: t, lambda t: t, lambda t: t, (0, 1)):.6g}"
+    )
+    print(
+        "Conservative check for <y + z, x + z, x + y> on [-1, 1]^3: "
+        f"{space_conservative.is_conservative_on_box((-1, 1), (-1, 1), (-1, 1))}"
+    )
+    print(
+        "Potential difference from (0, 0, 0) to (1, 2, 3): "
+        f"{space_conservative.potential_difference(Point3D(0, 0, 0), Point3D(1, 2, 3)):.6g}"
     )
 
 

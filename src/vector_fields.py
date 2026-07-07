@@ -142,6 +142,77 @@ class VectorField2D:
 
         return _trapezoid_rule(integrand, start, stop, segments)
 
+    def is_conservative_at(
+        self,
+        x: float,
+        y: float,
+        tolerance: float = 1e-5,
+        h: float = 1e-5,
+    ) -> bool:
+        """Return whether numerical evidence suggests ``F`` is conservative here."""
+        _validate_positive(tolerance, "tolerance")
+        return abs(self.curl_z(x, y, h)) <= tolerance
+
+    def is_conservative_on_rectangle(
+        self,
+        x_bounds: tuple[float, float],
+        y_bounds: tuple[float, float],
+        x_steps: int = 4,
+        y_steps: int = 4,
+        tolerance: float = 1e-5,
+        h: float = 1e-5,
+    ) -> bool:
+        """Check sampled curl values over a rectangular region."""
+        _validate_positive(tolerance, "tolerance")
+        x_values = _linspace(
+            _validate_bounds(x_bounds, "x_bounds"),
+            x_steps,
+            "x_steps",
+        )
+        y_values = _linspace(
+            _validate_bounds(y_bounds, "y_bounds"),
+            y_steps,
+            "y_steps",
+        )
+        return all(
+            self.is_conservative_at(x, y, tolerance, h)
+            for x in x_values
+            for y in y_values
+        )
+
+    def potential_difference(
+        self,
+        start: Point2D,
+        end: Point2D,
+        segments: int = 1000,
+    ) -> float:
+        """Approximate ``phi(end) - phi(start)`` along an axis-aligned path."""
+        x_integral = _trapezoid_rule(
+            lambda x: self.p_component(x, start.y),
+            start.x,
+            end.x,
+            segments,
+        )
+        y_integral = _trapezoid_rule(
+            lambda y: self.q_component(end.x, y),
+            start.y,
+            end.y,
+            segments,
+        )
+        return x_integral + y_integral
+
+    def potential_at(
+        self,
+        x: float,
+        y: float,
+        base_point: Point2D | None = None,
+        segments: int = 1000,
+    ) -> float:
+        """Approximate a potential value with ``phi(base_point) = 0``."""
+        if base_point is None:
+            base_point = Point2D(0.0, 0.0)
+        return self.potential_difference(base_point, Point2D(x, y), segments)
+
 
 @dataclass(frozen=True)
 class VectorField3D:
@@ -261,6 +332,93 @@ class VectorField3D:
 
         return _trapezoid_rule(integrand, start, stop, segments)
 
+    def is_conservative_at(
+        self,
+        x: float,
+        y: float,
+        z: float,
+        tolerance: float = 1e-5,
+        h: float = 1e-5,
+    ) -> bool:
+        """Return whether numerical evidence suggests ``F`` is conservative here."""
+        _validate_positive(tolerance, "tolerance")
+        return self.curl(x, y, z, h).magnitude() <= tolerance
+
+    def is_conservative_on_box(
+        self,
+        x_bounds: tuple[float, float],
+        y_bounds: tuple[float, float],
+        z_bounds: tuple[float, float],
+        x_steps: int = 3,
+        y_steps: int = 3,
+        z_steps: int = 3,
+        tolerance: float = 1e-5,
+        h: float = 1e-5,
+    ) -> bool:
+        """Check sampled curl values over a rectangular box."""
+        _validate_positive(tolerance, "tolerance")
+        x_values = _linspace(
+            _validate_bounds(x_bounds, "x_bounds"),
+            x_steps,
+            "x_steps",
+        )
+        y_values = _linspace(
+            _validate_bounds(y_bounds, "y_bounds"),
+            y_steps,
+            "y_steps",
+        )
+        z_values = _linspace(
+            _validate_bounds(z_bounds, "z_bounds"),
+            z_steps,
+            "z_steps",
+        )
+        return all(
+            self.is_conservative_at(x, y, z, tolerance, h)
+            for x in x_values
+            for y in y_values
+            for z in z_values
+        )
+
+    def potential_difference(
+        self,
+        start: Point3D,
+        end: Point3D,
+        segments: int = 1000,
+    ) -> float:
+        """Approximate ``phi(end) - phi(start)`` along an axis-aligned path."""
+        x_integral = _trapezoid_rule(
+            lambda x: self.p_component(x, start.y, start.z),
+            start.x,
+            end.x,
+            segments,
+        )
+        y_integral = _trapezoid_rule(
+            lambda y: self.q_component(end.x, y, start.z),
+            start.y,
+            end.y,
+            segments,
+        )
+        z_integral = _trapezoid_rule(
+            lambda z: self.r_component(end.x, end.y, z),
+            start.z,
+            end.z,
+            segments,
+        )
+        return x_integral + y_integral + z_integral
+
+    def potential_at(
+        self,
+        x: float,
+        y: float,
+        z: float,
+        base_point: Point3D | None = None,
+        segments: int = 1000,
+    ) -> float:
+        """Approximate a potential value with ``phi(base_point) = 0``."""
+        if base_point is None:
+            base_point = Point3D(0.0, 0.0, 0.0)
+        return self.potential_difference(base_point, Point3D(x, y, z), segments)
+
 
 def make_vector_field_2d(
     p_component: NumberFunction2D,
@@ -311,6 +469,11 @@ def _validate_bounds(bounds: tuple[float, float], name: str) -> tuple[float, flo
     if lower > upper:
         raise ValueError(f"{name} must be ordered as (lower, upper).")
     return (lower, upper)
+
+
+def _validate_positive(value: float, name: str) -> None:
+    if value <= 0:
+        raise ValueError(f"{name} must be positive.")
 
 
 def _linspace(

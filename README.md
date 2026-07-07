@@ -266,9 +266,11 @@ F(x, y, z) = <P(x, y, z), Q(x, y, z), R(x, y, z)>
 
 They evaluate and sample vector fields, compute magnitudes and unit directions,
 and approximate the derivative quantities used at the start of vector calculus.
-They also approximate oriented line integrals of vector fields.
+They also approximate oriented line integrals, check for conservative fields,
+and estimate potential differences.
 
 ```python
+from src.vectors import Point2D, Point3D
 from src.vector_fields import make_vector_field_2d, make_vector_field_3d
 
 plane_field = make_vector_field_2d(
@@ -284,6 +286,13 @@ print(plane_field.divergence(2, 3))
 print(plane_field.curl_z(2, 3))
 print(plane_field.line_integral(lambda t: t, lambda t: t, (0, 1)))
 
+plane_conservative = make_vector_field_2d(
+    lambda x, y: 2 * x * y,
+    lambda x, y: x**2 + 3 * y**2,
+)
+print(plane_conservative.is_conservative_on_rectangle((-1, 1), (-1, 1)))
+print(plane_conservative.potential_difference(Point2D(0, 0), Point2D(2, 1)))
+
 space_field = make_vector_field_3d(
     lambda x, y, z: x * y,
     lambda x, y, z: y * z,
@@ -295,6 +304,14 @@ print(space_field.jacobian_matrix(2, 3, 4))
 print(space_field.divergence(2, 3, 4))
 print(space_field.curl(2, 3, 4).as_text())
 print(space_field.line_integral(lambda t: t, lambda t: t, lambda t: t, (0, 1)))
+
+space_conservative = make_vector_field_3d(
+    lambda x, y, z: y + z,
+    lambda x, y, z: x + z,
+    lambda x, y, z: x + y,
+)
+print(space_conservative.is_conservative_on_box((-1, 1), (-1, 1), (-1, 1)))
+print(space_conservative.potential_difference(Point3D(0, 0, 0), Point3D(1, 2, 3)))
 ```
 
 Formulas supported:
@@ -308,6 +325,8 @@ Formulas supported:
 - space divergence `P_x + Q_y + R_z`
 - space curl `<R_y - Q_z, P_z - R_x, Q_x - P_y>`
 - oriented line integrals `integral_C F dot dr`
+- conservative-field checks by sampled curl values
+- potential differences for conservative fields
 
 ## Vector-Valued Functions and Space Curves
 
