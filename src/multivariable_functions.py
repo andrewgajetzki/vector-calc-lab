@@ -367,6 +367,32 @@ class ScalarFunction2D:
         gradient = self.gradient(x, y, h)
         return gradient.x * dx + gradient.y * dy
 
+    def line_integral(
+        self,
+        x_of_t: Callable[[float], float],
+        y_of_t: Callable[[float], float],
+        t_bounds: tuple[float, float],
+        segments: int = 1000,
+        h: float = 1e-5,
+    ) -> float:
+        """Approximate the scalar line integral ``integral_C f ds``."""
+        start, stop = t_bounds
+
+        def integrand(t: float) -> float:
+            velocity = Vector2D(
+                _central_difference(x_of_t, t, h),
+                _central_difference(y_of_t, t, h),
+            )
+            return self.function(x_of_t(t), y_of_t(t)) * velocity.magnitude()
+
+        return _trapezoid_rule_1d(
+            integrand,
+            start,
+            stop,
+            segments,
+            use_absolute_step=True,
+        )
+
     def double_integral_over_rectangle(
         self,
         x_bounds: tuple[float, float],
@@ -962,6 +988,34 @@ class ScalarFunction3D:
         """Approximate ``df = f_x dx + f_y dy + f_z dz``."""
         gradient = self.gradient(x, y, z, h)
         return gradient.x * dx + gradient.y * dy + gradient.z * dz
+
+    def line_integral(
+        self,
+        x_of_t: Callable[[float], float],
+        y_of_t: Callable[[float], float],
+        z_of_t: Callable[[float], float],
+        t_bounds: tuple[float, float],
+        segments: int = 1000,
+        h: float = 1e-5,
+    ) -> float:
+        """Approximate the scalar line integral ``integral_C f ds``."""
+        start, stop = t_bounds
+
+        def integrand(t: float) -> float:
+            velocity = Vector3D(
+                _central_difference(x_of_t, t, h),
+                _central_difference(y_of_t, t, h),
+                _central_difference(z_of_t, t, h),
+            )
+            return self.function(x_of_t(t), y_of_t(t), z_of_t(t)) * velocity.magnitude()
+
+        return _trapezoid_rule_1d(
+            integrand,
+            start,
+            stop,
+            segments,
+            use_absolute_step=True,
+        )
 
     def triple_integral_over_box(
         self,
@@ -1720,6 +1774,23 @@ def _linspace(bounds: tuple[float, float], count: int) -> tuple[float, ...]:
     lower, upper = bounds
     step = (upper - lower) / (count - 1)
     return tuple(lower + index * step for index in range(count))
+
+
+def _trapezoid_rule_1d(
+    function: Callable[[float], float],
+    start: float,
+    stop: float,
+    segments: int,
+    use_absolute_step: bool = False,
+) -> float:
+    _validate_segments(segments, "segments")
+
+    step = (stop - start) / segments
+    total = 0.5 * (function(start) + function(stop))
+    for index in range(1, segments):
+        total += function(start + index * step)
+
+    return total * (abs(step) if use_absolute_step else step)
 
 
 def _double_trapezoid_rule(

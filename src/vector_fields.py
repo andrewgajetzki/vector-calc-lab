@@ -122,6 +122,26 @@ class VectorField2D:
             h,
         )
 
+    def line_integral(
+        self,
+        x_of_t: Callable[[float], float],
+        y_of_t: Callable[[float], float],
+        t_bounds: tuple[float, float],
+        segments: int = 1000,
+        h: float = 1e-5,
+    ) -> float:
+        """Approximate the work integral ``integral_C F dot dr``."""
+        start, stop = t_bounds
+
+        def integrand(t: float) -> float:
+            velocity = Vector2D(
+                _central_difference(x_of_t, t, h),
+                _central_difference(y_of_t, t, h),
+            )
+            return self.value_at(x_of_t(t), y_of_t(t)).dot(velocity)
+
+        return _trapezoid_rule(integrand, start, stop, segments)
+
 
 @dataclass(frozen=True)
 class VectorField3D:
@@ -219,6 +239,28 @@ class VectorField3D:
             - _partial_y_3d(self.p_component, x, y, z, h),
         )
 
+    def line_integral(
+        self,
+        x_of_t: Callable[[float], float],
+        y_of_t: Callable[[float], float],
+        z_of_t: Callable[[float], float],
+        t_bounds: tuple[float, float],
+        segments: int = 1000,
+        h: float = 1e-5,
+    ) -> float:
+        """Approximate the work integral ``integral_C F dot dr``."""
+        start, stop = t_bounds
+
+        def integrand(t: float) -> float:
+            velocity = Vector3D(
+                _central_difference(x_of_t, t, h),
+                _central_difference(y_of_t, t, h),
+                _central_difference(z_of_t, t, h),
+            )
+            return self.value_at(x_of_t(t), y_of_t(t), z_of_t(t)).dot(velocity)
+
+        return _trapezoid_rule(integrand, start, stop, segments)
+
 
 def make_vector_field_2d(
     p_component: NumberFunction2D,
@@ -291,6 +333,22 @@ def _central_difference(
     if h <= 0:
         raise ValueError("h must be positive.")
     return (function(value + h) - function(value - h)) / (2 * h)
+
+
+def _trapezoid_rule(
+    function: Callable[[float], float],
+    start: float,
+    stop: float,
+    segments: int,
+) -> float:
+    if segments < 1:
+        raise ValueError("segments must be at least 1.")
+
+    step = (stop - start) / segments
+    total = 0.5 * (function(start) + function(stop))
+    for index in range(1, segments):
+        total += function(start + index * step)
+    return total * step
 
 
 def _partial_x_2d(function: NumberFunction2D, x: float, y: float, h: float) -> float:

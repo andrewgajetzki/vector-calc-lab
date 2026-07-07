@@ -141,6 +141,15 @@ def run_multivariable_function_demo() -> None:
         "Double integral over quarter disk 0 <= r <= 1: "
         f"{quarter_disk_integral:.6g}"
     )
+    scalar_line_integral = surface.line_integral(
+        lambda t: t,
+        lambda t: 2 * t,
+        (0, 1),
+    )
+    print(
+        "Scalar line integral of f along r(t)=<t, 2t>, 0 <= t <= 1: "
+        f"{scalar_line_integral:.6g}"
+    )
     transformed_area = unit_lamina.double_integral_change_of_variables(
         (0, 1),
         (0, 1),
@@ -246,12 +255,20 @@ def run_vector_field_demo() -> None:
     print(f"Unit direction at (2, 3): {plane_field.unit_at(2, 3).as_text()}")
     print(f"Divergence at (2, 3): {plane_field.divergence(2, 3):.6g}")
     print(f"Scalar curl at (2, 3): {plane_field.curl_z(2, 3):.6g}")
+    print(
+        "Line integral along r(t)=<t, t>, 0 <= t <= 1: "
+        f"{plane_field.line_integral(lambda t: t, lambda t: t, (0, 1)):.6g}"
+    )
     print()
     print("Example space field: F(x, y, z) = <xy, yz, zx>")
     print()
     print(f"F(2, 3, 4): {space_field.value_at(2, 3, 4).as_text()}")
     print(f"Divergence at (2, 3, 4): {space_field.divergence(2, 3, 4):.6g}")
     print(f"Curl at (2, 3, 4): {space_field.curl(2, 3, 4).as_text()}")
+    print(
+        "Line integral along r(t)=<t, t, t>, 0 <= t <= 1: "
+        f"{space_field.line_integral(lambda t: t, lambda t: t, lambda t: t, (0, 1)):.6g}"
+    )
 
 
 def run_space_curve_demo() -> None:

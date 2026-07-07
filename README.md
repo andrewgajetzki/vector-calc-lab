@@ -65,8 +65,8 @@ gradients, directional derivatives, chain-rule derivatives, tangent planes, and
 linear approximations. They also estimate double integrals over rectangular and
 general Type I/Type II regions, triple integrals in rectangular, cylindrical,
 and spherical coordinates, changes of variables with Jacobian determinants,
-centers of mass, moments of inertia, plus local, absolute, and constrained
-extrema numerically.
+scalar line integrals, centers of mass, moments of inertia, plus local,
+absolute, and constrained extrema numerically.
 
 ```python
 import math
@@ -100,6 +100,7 @@ print(surface.double_integral_over_rectangle((0, 1), (0, 1)))
 print(surface.double_integral_type_i((0, 1), lambda x: 0, lambda x: x))
 print(surface.double_integral_type_ii((0, 1), lambda y: y, lambda y: 1))
 print(surface.double_integral_polar((0, math.pi / 2), lambda theta: 0, lambda theta: 1))
+print(surface.line_integral(lambda t: t, lambda t: 2 * t, (0, 1)))
 print(
     unit_lamina.double_integral_change_of_variables(
         (0, 1),
@@ -238,6 +239,7 @@ Formulas supported:
 - tangent planes to graphs `z = f(x, y)`
 - tangent planes to level surfaces `F(x, y, z) = c`
 - linear approximation and differentials
+- scalar line integrals `integral_C f ds`
 - double integrals over rectangular, Type I/Type II, and polar regions
 - triple integrals over rectangular boxes, nested `dz dy dx` regions,
   cylindrical coordinates, and spherical coordinates
@@ -264,6 +266,7 @@ F(x, y, z) = <P(x, y, z), Q(x, y, z), R(x, y, z)>
 
 They evaluate and sample vector fields, compute magnitudes and unit directions,
 and approximate the derivative quantities used at the start of vector calculus.
+They also approximate oriented line integrals of vector fields.
 
 ```python
 from src.vector_fields import make_vector_field_2d, make_vector_field_3d
@@ -279,6 +282,7 @@ print(plane_field.unit_at(2, 3).as_text())
 print(plane_field.jacobian_matrix(2, 3))
 print(plane_field.divergence(2, 3))
 print(plane_field.curl_z(2, 3))
+print(plane_field.line_integral(lambda t: t, lambda t: t, (0, 1)))
 
 space_field = make_vector_field_3d(
     lambda x, y, z: x * y,
@@ -290,6 +294,7 @@ print(space_field.value_at(2, 3, 4).as_text())
 print(space_field.jacobian_matrix(2, 3, 4))
 print(space_field.divergence(2, 3, 4))
 print(space_field.curl(2, 3, 4).as_text())
+print(space_field.line_integral(lambda t: t, lambda t: t, lambda t: t, (0, 1)))
 ```
 
 Formulas supported:
@@ -302,6 +307,7 @@ Formulas supported:
 - plane scalar curl `Q_x - P_y`
 - space divergence `P_x + Q_y + R_z`
 - space curl `<R_y - Q_z, P_z - R_x, Q_x - P_y>`
+- oriented line integrals `integral_C F dot dr`
 
 ## Vector-Valued Functions and Space Curves
 

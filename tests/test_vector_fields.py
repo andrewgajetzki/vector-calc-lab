@@ -62,6 +62,30 @@ def test_vector_field_2d_divergence_curl_and_jacobian():
     assert field.curl_z(2, 3) == pytest.approx(2)
 
 
+def test_vector_field_2d_line_integral():
+    linear = make_vector_field_2d(lambda x, y: y, lambda x, y: x)
+    circulation = make_vector_field_2d(lambda x, y: -y, lambda x, y: x)
+
+    assert linear.line_integral(
+        lambda t: t,
+        lambda t: t,
+        (0, 1),
+        segments=1,
+    ) == pytest.approx(1)
+    assert linear.line_integral(
+        lambda t: t,
+        lambda t: t,
+        (1, 0),
+        segments=1,
+    ) == pytest.approx(-1)
+    assert circulation.line_integral(
+        math.cos,
+        math.sin,
+        (0, 2 * math.pi),
+        segments=400,
+    ) == pytest.approx(2 * math.pi, rel=1e-5)
+
+
 def test_vector_field_3d_evaluates_and_samples():
     field = make_vector_field_3d(
         lambda x, y, z: x * y,
@@ -107,6 +131,29 @@ def test_vector_field_3d_divergence_curl_and_jacobian():
     assert_vector3d(field.curl(2, 3, 4), -3, -4, -2)
 
 
+def test_vector_field_3d_line_integral():
+    field = make_vector_field_3d(
+        lambda x, y, z: y,
+        lambda x, y, z: z,
+        lambda x, y, z: x,
+    )
+
+    assert field.line_integral(
+        lambda t: t,
+        lambda t: t,
+        lambda t: t,
+        (0, 1),
+        segments=1,
+    ) == pytest.approx(1.5)
+    assert field.line_integral(
+        lambda t: t,
+        lambda t: t,
+        lambda t: t,
+        (1, 0),
+        segments=1,
+    ) == pytest.approx(-1.5)
+
+
 def test_vector_field_validation():
     zero_2d = make_vector_field_2d(lambda x, y: 0, lambda x, y: 0)
     field_2d = make_vector_field_2d(lambda x, y: x, lambda x, y: y)
@@ -131,9 +178,29 @@ def test_vector_field_validation():
         field_2d.sample((1, 0), (0, 1), x_steps=1, y_steps=1)
     with pytest.raises(ValueError, match="h"):
         field_2d.divergence(0, 0, h=0)
+    with pytest.raises(ValueError, match="segments"):
+        field_2d.line_integral(lambda t: t, lambda t: t, (0, 1), segments=0)
+    with pytest.raises(ValueError, match="h"):
+        field_2d.line_integral(lambda t: t, lambda t: t, (0, 1), h=0)
     with pytest.raises(ValueError, match="z_steps"):
         field_3d.sample((0, 1), (0, 1), (0, 1), 1, 1, 0)
     with pytest.raises(ValueError, match="z_bounds"):
         field_3d.sample((0, 1), (0, 1), (1, 0), 1, 1, 1)
     with pytest.raises(ValueError, match="h"):
         field_3d.curl(0, 0, 0, h=0)
+    with pytest.raises(ValueError, match="segments"):
+        field_3d.line_integral(
+            lambda t: t,
+            lambda t: t,
+            lambda t: t,
+            (0, 1),
+            segments=0,
+        )
+    with pytest.raises(ValueError, match="h"):
+        field_3d.line_integral(
+            lambda t: t,
+            lambda t: t,
+            lambda t: t,
+            (0, 1),
+            h=0,
+        )

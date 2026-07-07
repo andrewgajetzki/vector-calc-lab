@@ -223,6 +223,30 @@ def test_function_2d_double_integral_change_of_variables():
     ) == pytest.approx(math.pi / 2, rel=1e-5)
 
 
+def test_function_2d_scalar_line_integral():
+    linear = make_function_2d(lambda x, y: x + y)
+    radial = make_function_2d(lambda x, y: x**2 + y**2)
+
+    assert linear.line_integral(
+        lambda t: t,
+        lambda t: 2 * t,
+        (0, 1),
+        segments=1,
+    ) == pytest.approx(1.5 * math.sqrt(5))
+    assert linear.line_integral(
+        lambda t: t,
+        lambda t: 2 * t,
+        (1, 0),
+        segments=1,
+    ) == pytest.approx(1.5 * math.sqrt(5))
+    assert radial.line_integral(
+        math.cos,
+        math.sin,
+        (0, 2 * math.pi),
+        segments=400,
+    ) == pytest.approx(2 * math.pi, rel=1e-5)
+
+
 def test_function_2d_mass_properties_over_rectangle():
     density = make_function_2d(lambda x, y: 2)
 
@@ -549,6 +573,33 @@ def test_function_3d_triple_integral_change_of_variables():
     ) == pytest.approx(4 * math.pi / 5, rel=5e-4)
 
 
+def test_function_3d_scalar_line_integral():
+    linear = make_function_3d(lambda x, y, z: x + y + z)
+    radial = make_function_3d(lambda x, y, z: x**2 + y**2 + z**2)
+
+    assert linear.line_integral(
+        lambda t: t,
+        lambda t: 2 * t,
+        lambda t: 3 * t,
+        (0, 1),
+        segments=1,
+    ) == pytest.approx(3 * math.sqrt(14))
+    assert linear.line_integral(
+        lambda t: t,
+        lambda t: 2 * t,
+        lambda t: 3 * t,
+        (1, 0),
+        segments=1,
+    ) == pytest.approx(3 * math.sqrt(14))
+    assert radial.line_integral(
+        math.cos,
+        math.sin,
+        lambda t: t,
+        (0, math.pi),
+        segments=400,
+    ) == pytest.approx(math.sqrt(2) * (math.pi + math.pi**3 / 3), rel=1e-5)
+
+
 def test_function_3d_mass_properties_over_box():
     density = make_function_3d(lambda x, y, z: 1)
 
@@ -810,6 +861,10 @@ def test_limit_helpers_validate_inputs():
             lambda u, v: v,
             h=0,
         )
+    with pytest.raises(ValueError, match="segments"):
+        function.line_integral(lambda t: t, lambda t: t, (0, 1), segments=0)
+    with pytest.raises(ValueError, match="h"):
+        function.line_integral(lambda t: t, lambda t: t, (0, 1), h=0)
     with pytest.raises(ValueError, match="Mass"):
         zero_density.mass_properties_over_rectangle((0, 1), (0, 1))
     with pytest.raises(ValueError, match="z_segments"):
@@ -869,6 +924,22 @@ def test_limit_helpers_validate_inputs():
             lambda u, v, w: u,
             lambda u, v, w: v,
             lambda u, v, w: w,
+            h=0,
+        )
+    with pytest.raises(ValueError, match="segments"):
+        function_3d.line_integral(
+            lambda t: t,
+            lambda t: t,
+            lambda t: t,
+            (0, 1),
+            segments=0,
+        )
+    with pytest.raises(ValueError, match="h"):
+        function_3d.line_integral(
+            lambda t: t,
+            lambda t: t,
+            lambda t: t,
+            (0, 1),
             h=0,
         )
     with pytest.raises(ValueError, match="Mass"):
