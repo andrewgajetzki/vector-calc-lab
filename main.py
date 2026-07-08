@@ -6,6 +6,12 @@ import math
 
 from src.conic_sections import make_conic
 from src.multivariable_functions import make_function_2d, make_function_3d
+from src.ode_solver import (
+    constant_forcing,
+    exponential_forcing,
+    solve_homogeneous_second_order,
+    solve_linear_second_order,
+)
 from src.parametric_equations import make_curve, points_table
 from src.polar_coordinates import make_polar_curve, polar_to_cartesian_table
 from src.quadric_surfaces import make_quadric
@@ -47,6 +53,8 @@ def run_demo() -> None:
     run_conic_demo()
     print()
     run_quadric_demo()
+    print()
+    run_ode_demo()
 
 
 def run_vector_demo() -> None:
@@ -507,6 +515,27 @@ def run_quadric_demo() -> None:
     print("Example equation: x^2/4 + y^2/9 - z = 0")
     print()
     print(paraboloid.standard_form().as_text())
+
+
+def run_ode_demo() -> None:
+    """Show second-order linear ODE tools."""
+    homogeneous = solve_homogeneous_second_order(1, 3, 2)
+    constant_forced = solve_linear_second_order(1, 0, -1, constant_forcing(2))
+    resonant_forced = solve_linear_second_order(1, -2, 1, exponential_forcing(1, 1))
+
+    print("Second-Order Linear ODEs")
+    print()
+    print("Example homogeneous equation: y'' + 3y' + 2y = 0")
+    print()
+    print(homogeneous.as_text())
+    print()
+    print("Example nonhomogeneous equation: y'' - y = 2")
+    print()
+    print(constant_forced.as_text())
+    print()
+    print("Example resonant forcing: y'' - 2y' + y = e^x")
+    print()
+    print(resonant_forced.as_text())
 
 
 if __name__ == "__main__":

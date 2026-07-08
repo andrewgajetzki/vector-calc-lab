@@ -698,32 +698,67 @@ Formulas supported:
 Rotated conics with a nonzero `Bxy` term can be classified, but standard-form
 feature extraction currently requires `B = 0`.
 
-## Homogeneous Second-Order Linear ODEs
+## Second-Order Linear ODEs
 
 The ODE solver works with equations of the form:
 
 ```text
-a*y'' + b*y' + c*y = 0
+a*y'' + b*y' + c*y = g(x)
 ```
 
-It builds the characteristic equation, classifies the roots, and returns a human-readable general solution.
+It builds the characteristic equation, classifies the roots, and returns a
+human-readable general solution. Homogeneous equations are supported directly,
+and nonhomogeneous equations support constant, exponential, and sinusoidal
+forcing terms by undetermined coefficients.
 
 Example:
 
 ```python
-from src.ode_solver import solve_homogeneous_second_order
+from src.ode_solver import (
+    constant_forcing,
+    exponential_forcing,
+    solve_homogeneous_second_order,
+    solve_linear_second_order,
+)
 
-solution = solve_homogeneous_second_order(1, 3, 2)
-print(solution.as_text())
+homogeneous = solve_homogeneous_second_order(1, 3, 2)
+constant_forced = solve_linear_second_order(1, 0, -1, constant_forcing(2))
+resonant_forced = solve_linear_second_order(1, -2, 1, exponential_forcing(1, 1))
+
+print(homogeneous.as_text())
+print(constant_forced.as_text())
+print(resonant_forced.as_text())
 ```
 
-Output:
+Sample output:
 
 ```text
 Characteristic equation: r^2 + 3r + 2 = 0
 Roots: r = -1, -2
 General solution: y = C1*e^(-x) + C2*e^(-2x)
+
+Equation: y'' - y = 2
+Characteristic equation: r^2 - 1 = 0
+Roots: r = 1, -1
+Complementary solution: y_c = C1*e^(x) + C2*e^(-x)
+Particular solution: y_p = -2
+General solution: y = C1*e^(x) + C2*e^(-x) - 2
+
+Equation: y'' - 2y' + y = e^(x)
+Characteristic equation: r^2 - 2r + 1 = 0
+Roots: r = 1
+Complementary solution: y_c = (C1 + C2*x)*e^(x)
+Particular solution: y_p = 0.5*x^2*e^(x)
+General solution: y = (C1 + C2*x)*e^(x) + 0.5*x^2*e^(x)
 ```
+
+Formulas supported:
+
+- characteristic equation `a*r^2 + b*r + c = 0`
+- homogeneous solutions for distinct real, repeated real, and complex roots
+- nonhomogeneous linear solutions for constant forcing
+- exponential forcing, including resonance with characteristic roots
+- sinusoidal forcing, including simple resonance
 
 ## Run tests
 
