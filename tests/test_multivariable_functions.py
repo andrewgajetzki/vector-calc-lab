@@ -600,6 +600,50 @@ def test_function_3d_scalar_line_integral():
     ) == pytest.approx(math.sqrt(2) * (math.pi + math.pi**3 / 3), rel=1e-5)
 
 
+def test_function_3d_surface_integral_parametric():
+    constant = make_function_3d(lambda x, y, z: 1)
+    linear = make_function_3d(lambda x, y, z: x + y + z)
+
+    assert constant.surface_integral_parametric(
+        (0, 2),
+        (0, 3),
+        lambda u, v: u,
+        lambda u, v: v,
+        lambda u, v: 0,
+        u_segments=1,
+        v_segments=1,
+    ) == pytest.approx(6)
+    assert linear.surface_integral_parametric(
+        (0, 1),
+        (0, 1),
+        lambda u, v: u,
+        lambda u, v: v,
+        lambda u, v: u + v,
+        u_segments=1,
+        v_segments=1,
+    ) == pytest.approx(2 * math.sqrt(3))
+
+
+def test_function_3d_surface_integral_over_graph():
+    constant = make_function_3d(lambda x, y, z: 1)
+    linear = make_function_3d(lambda x, y, z: x + y + z)
+
+    assert constant.surface_integral_over_graph(
+        (0, 1),
+        (0, 1),
+        lambda x, y: x + y,
+        x_segments=1,
+        y_segments=1,
+    ) == pytest.approx(math.sqrt(3))
+    assert linear.surface_integral_over_graph(
+        (0, 1),
+        (0, 1),
+        lambda x, y: x + y,
+        x_segments=1,
+        y_segments=1,
+    ) == pytest.approx(2 * math.sqrt(3))
+
+
 def test_function_3d_mass_properties_over_box():
     density = make_function_3d(lambda x, y, z: 1)
 
@@ -940,6 +984,22 @@ def test_limit_helpers_validate_inputs():
             lambda t: t,
             lambda t: t,
             (0, 1),
+            h=0,
+        )
+    with pytest.raises(ValueError, match="u_segments"):
+        function_3d.surface_integral_parametric(
+            (0, 1),
+            (0, 1),
+            lambda u, v: u,
+            lambda u, v: v,
+            lambda u, v: 0,
+            u_segments=0,
+        )
+    with pytest.raises(ValueError, match="h"):
+        function_3d.surface_integral_over_graph(
+            (0, 1),
+            (0, 1),
+            lambda x, y: x + y,
             h=0,
         )
     with pytest.raises(ValueError, match="Mass"):

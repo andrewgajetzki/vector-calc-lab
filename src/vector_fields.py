@@ -458,6 +458,67 @@ class VectorField3D:
 
         return _trapezoid_rule(integrand, start, stop, segments)
 
+    def flux_integral_parametric(
+        self,
+        u_bounds: tuple[float, float],
+        v_bounds: tuple[float, float],
+        x_of_u_v: Callable[[float, float], float],
+        y_of_u_v: Callable[[float, float], float],
+        z_of_u_v: Callable[[float, float], float],
+        u_segments: int = 100,
+        v_segments: int = 100,
+        h: float = 1e-5,
+        reverse_orientation: bool = False,
+    ) -> float:
+        """Approximate oriented flux ``integral integral_S F dot n dS``."""
+        u_bounds = _validate_bounds(u_bounds, "u_bounds")
+        v_bounds = _validate_bounds(v_bounds, "v_bounds")
+        _validate_segments(u_segments, "u_segments")
+        _validate_segments(v_segments, "v_segments")
+
+        def integrand(u: float, v: float) -> float:
+            normal = _surface_normal(x_of_u_v, y_of_u_v, z_of_u_v, u, v, h)
+            if reverse_orientation:
+                normal = -normal
+            return self.value_at(
+                x_of_u_v(u, v),
+                y_of_u_v(u, v),
+                z_of_u_v(u, v),
+            ).dot(normal)
+
+        return _double_trapezoid_rule(
+            integrand,
+            u_bounds,
+            v_bounds,
+            u_segments,
+            v_segments,
+        )
+
+    def flux_integral_over_graph(
+        self,
+        x_bounds: tuple[float, float],
+        y_bounds: tuple[float, float],
+        z_of_x_y: Callable[[float, float], float],
+        x_segments: int = 100,
+        y_segments: int = 100,
+        h: float = 1e-5,
+        orientation: str = "up",
+    ) -> float:
+        """Approximate flux over ``z = g(x, y)`` with up/down orientation."""
+        if orientation not in ("up", "down"):
+            raise ValueError("orientation must be 'up' or 'down'.")
+        return self.flux_integral_parametric(
+            x_bounds,
+            y_bounds,
+            lambda x, y: x,
+            lambda x, y: y,
+            z_of_x_y,
+            x_segments,
+            y_segments,
+            h,
+            reverse_orientation=orientation == "down",
+        )
+
     def is_conservative_at(
         self,
         x: float,
@@ -746,6 +807,34 @@ def _partial_z_3d(
     h: float,
 ) -> float:
     return _central_difference(lambda value: function(x, y, value), z, h)
+
+
+def _parameter_partials(
+    function: Callable[[float, float], float],
+    u: float,
+    v: float,
+    h: float,
+) -> Vector2D:
+    return Vector2D(
+        _central_difference(lambda value: function(value, v), u, h),
+        _central_difference(lambda value: function(u, value), v, h),
+    )
+
+
+def _surface_normal(
+    x_of_u_v: Callable[[float, float], float],
+    y_of_u_v: Callable[[float, float], float],
+    z_of_u_v: Callable[[float, float], float],
+    u: float,
+    v: float,
+    h: float,
+) -> Vector3D:
+    x_partials = _parameter_partials(x_of_u_v, u, v, h)
+    y_partials = _parameter_partials(y_of_u_v, u, v, h)
+    z_partials = _parameter_partials(z_of_u_v, u, v, h)
+    tangent_u = Vector3D(x_partials.x, y_partials.x, z_partials.x)
+    tangent_v = Vector3D(x_partials.y, y_partials.y, z_partials.y)
+    return tangent_u.cross(tangent_v)
 
 
 def _gradient_3d(

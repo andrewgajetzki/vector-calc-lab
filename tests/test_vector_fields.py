@@ -244,6 +244,58 @@ def test_vector_field_3d_line_integral():
     ) == pytest.approx(-1.5)
 
 
+def test_vector_field_3d_flux_integral_parametric():
+    upward = make_vector_field_3d(
+        lambda x, y, z: 0,
+        lambda x, y, z: 0,
+        lambda x, y, z: 1,
+    )
+
+    assert upward.flux_integral_parametric(
+        (0, 1),
+        (0, 1),
+        lambda u, v: u,
+        lambda u, v: v,
+        lambda u, v: 0,
+        u_segments=1,
+        v_segments=1,
+    ) == pytest.approx(1)
+    assert upward.flux_integral_parametric(
+        (0, 1),
+        (0, 1),
+        lambda u, v: u,
+        lambda u, v: v,
+        lambda u, v: 0,
+        u_segments=1,
+        v_segments=1,
+        reverse_orientation=True,
+    ) == pytest.approx(-1)
+
+
+def test_vector_field_3d_flux_integral_over_graph():
+    upward = make_vector_field_3d(
+        lambda x, y, z: 0,
+        lambda x, y, z: 0,
+        lambda x, y, z: 1,
+    )
+
+    assert upward.flux_integral_over_graph(
+        (0, 1),
+        (0, 1),
+        lambda x, y: x + y,
+        x_segments=1,
+        y_segments=1,
+    ) == pytest.approx(1)
+    assert upward.flux_integral_over_graph(
+        (0, 1),
+        (0, 1),
+        lambda x, y: x + y,
+        x_segments=1,
+        y_segments=1,
+        orientation="down",
+    ) == pytest.approx(-1)
+
+
 def test_vector_field_3d_detects_conservative_fields():
     conservative = make_vector_field_3d(
         lambda x, y, z: y + z,
@@ -357,6 +409,29 @@ def test_vector_field_validation():
             lambda t: t,
             lambda t: t,
             (0, 1),
+            h=0,
+        )
+    with pytest.raises(ValueError, match="u_segments"):
+        field_3d.flux_integral_parametric(
+            (0, 1),
+            (0, 1),
+            lambda u, v: u,
+            lambda u, v: v,
+            lambda u, v: 0,
+            u_segments=0,
+        )
+    with pytest.raises(ValueError, match="orientation"):
+        field_3d.flux_integral_over_graph(
+            (0, 1),
+            (0, 1),
+            lambda x, y: x + y,
+            orientation="sideways",
+        )
+    with pytest.raises(ValueError, match="h"):
+        field_3d.flux_integral_over_graph(
+            (0, 1),
+            (0, 1),
+            lambda x, y: x + y,
             h=0,
         )
     with pytest.raises(ValueError, match="tolerance"):

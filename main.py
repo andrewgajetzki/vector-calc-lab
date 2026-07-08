@@ -150,6 +150,12 @@ def run_multivariable_function_demo() -> None:
         "Scalar line integral of f along r(t)=<t, 2t>, 0 <= t <= 1: "
         f"{scalar_line_integral:.6g}"
     )
+    surface_area = unit_density.surface_integral_over_graph(
+        (0, 1),
+        (0, 1),
+        lambda x, y: x + y,
+    )
+    print(f"Surface integral of 1 over z = x + y on [0, 1]^2: {surface_area:.6g}")
     transformed_area = unit_lamina.double_integral_change_of_variables(
         (0, 1),
         (0, 1),
@@ -251,6 +257,11 @@ def run_vector_field_demo() -> None:
         lambda x, y, z: y * z,
         lambda x, y, z: z * x,
     )
+    unit_flux = make_vector_field_3d(
+        lambda x, y, z: 0,
+        lambda x, y, z: 0,
+        lambda x, y, z: 1,
+    )
     space_conservative = make_vector_field_3d(
         lambda x, y, z: y + z,
         lambda x, y, z: x + z,
@@ -296,6 +307,12 @@ def run_vector_field_demo() -> None:
         "Line integral along r(t)=<t, t, t>, 0 <= t <= 1: "
         f"{space_field.line_integral(lambda t: t, lambda t: t, lambda t: t, (0, 1)):.6g}"
     )
+    graph_flux = unit_flux.flux_integral_over_graph(
+        (0, 1),
+        (0, 1),
+        lambda x, y: x + y,
+    )
+    print(f"Upward flux of <0, 0, 1> through z = x + y: {graph_flux:.6g}")
     print(
         "Conservative check for <y + z, x + z, x + y> on [-1, 1]^3: "
         f"{space_conservative.is_conservative_on_box((-1, 1), (-1, 1), (-1, 1))}"

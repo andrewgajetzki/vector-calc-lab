@@ -1017,6 +1017,59 @@ class ScalarFunction3D:
             use_absolute_step=True,
         )
 
+    def surface_integral_parametric(
+        self,
+        u_bounds: tuple[float, float],
+        v_bounds: tuple[float, float],
+        x_of_u_v: Callable[[float, float], float],
+        y_of_u_v: Callable[[float, float], float],
+        z_of_u_v: Callable[[float, float], float],
+        u_segments: int = 100,
+        v_segments: int = 100,
+        h: float = 1e-5,
+    ) -> float:
+        """Approximate ``integral integral_S f dS`` over a parametric surface."""
+        u_bounds = _validate_bounds(u_bounds, "u_bounds")
+        v_bounds = _validate_bounds(v_bounds, "v_bounds")
+        _validate_segments(u_segments, "u_segments")
+        _validate_segments(v_segments, "v_segments")
+
+        def integrand(u: float, v: float) -> float:
+            normal = _surface_normal(x_of_u_v, y_of_u_v, z_of_u_v, u, v, h)
+            return (
+                self.function(x_of_u_v(u, v), y_of_u_v(u, v), z_of_u_v(u, v))
+                * normal.magnitude()
+            )
+
+        return _double_trapezoid_rule(
+            integrand,
+            u_bounds,
+            v_bounds,
+            u_segments,
+            v_segments,
+        )
+
+    def surface_integral_over_graph(
+        self,
+        x_bounds: tuple[float, float],
+        y_bounds: tuple[float, float],
+        z_of_x_y: Callable[[float, float], float],
+        x_segments: int = 100,
+        y_segments: int = 100,
+        h: float = 1e-5,
+    ) -> float:
+        """Approximate ``integral integral_S f dS`` over ``z = g(x, y)``."""
+        return self.surface_integral_parametric(
+            x_bounds,
+            y_bounds,
+            lambda x, y: x,
+            lambda x, y: y,
+            z_of_x_y,
+            x_segments,
+            y_segments,
+            h,
+        )
+
     def triple_integral_over_box(
         self,
         x_bounds: tuple[float, float],
@@ -1708,6 +1761,22 @@ def _change_of_variables_jacobian_3d(
             (z_partials.x, z_partials.y, z_partials.z),
         )
     )
+
+
+def _surface_normal(
+    x_of_u_v: Callable[[float, float], float],
+    y_of_u_v: Callable[[float, float], float],
+    z_of_u_v: Callable[[float, float], float],
+    u: float,
+    v: float,
+    h: float,
+) -> Vector3D:
+    x_partials = _parameter_partials(x_of_u_v, u, v, h)
+    y_partials = _parameter_partials(y_of_u_v, u, v, h)
+    z_partials = _parameter_partials(z_of_u_v, u, v, h)
+    tangent_u = Vector3D(x_partials.x, y_partials.x, z_partials.x)
+    tangent_v = Vector3D(x_partials.y, y_partials.y, z_partials.y)
+    return tangent_u.cross(tangent_v)
 
 
 def _determinant_3x3(matrix: tuple[tuple[float, float, float], ...]) -> float:

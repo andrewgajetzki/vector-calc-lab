@@ -65,8 +65,8 @@ gradients, directional derivatives, chain-rule derivatives, tangent planes, and
 linear approximations. They also estimate double integrals over rectangular and
 general Type I/Type II regions, triple integrals in rectangular, cylindrical,
 and spherical coordinates, changes of variables with Jacobian determinants,
-scalar line integrals, centers of mass, moments of inertia, plus local,
-absolute, and constrained extrema numerically.
+scalar line integrals, scalar surface integrals, centers of mass, moments of
+inertia, plus local, absolute, and constrained extrema numerically.
 
 ```python
 import math
@@ -163,6 +163,13 @@ print(
 print(volume_function.linear_approximation(1, 2, 3, 1.1, 1.9, 3.05))
 print(volume_function.limit_at(1, 2, 3).as_text())
 print(volume_function.is_continuous_at(1, 2, 3))
+print(
+    unit_density.surface_integral_over_graph(
+        (0, 1),
+        (0, 1),
+        lambda x, y: x + y,
+    )
+)
 print(volume_function.triple_integral_over_box((0, 1), (0, 1), (0, 1)))
 print(
     unit_density.triple_integral_change_of_variables(
@@ -240,6 +247,7 @@ Formulas supported:
 - tangent planes to level surfaces `F(x, y, z) = c`
 - linear approximation and differentials
 - scalar line integrals `integral_C f ds`
+- scalar surface integrals over parametric surfaces and graph surfaces
 - double integrals over rectangular, Type I/Type II, and polar regions
 - triple integrals over rectangular boxes, nested `dz dy dx` regions,
   cylindrical coordinates, and spherical coordinates
@@ -266,9 +274,9 @@ F(x, y, z) = <P(x, y, z), Q(x, y, z), R(x, y, z)>
 
 They evaluate and sample vector fields, compute magnitudes and unit directions,
 and approximate the derivative quantities used at the start of vector calculus.
-They also approximate oriented line integrals, check for conservative fields,
-estimate potential differences, and apply Green's theorem over rectangular,
-Type I, and Type II plane regions.
+They also approximate oriented line integrals, surface flux integrals, check for
+conservative fields, estimate potential differences, and apply Green's theorem
+over rectangular, Type I, and Type II plane regions.
 
 ```python
 from src.vectors import Point2D, Point3D
@@ -311,6 +319,13 @@ print(space_field.divergence(2, 3, 4))
 print(space_field.curl(2, 3, 4).as_text())
 print(space_field.line_integral(lambda t: t, lambda t: t, lambda t: t, (0, 1)))
 
+unit_flux = make_vector_field_3d(
+    lambda x, y, z: 0,
+    lambda x, y, z: 0,
+    lambda x, y, z: 1,
+)
+print(unit_flux.flux_integral_over_graph((0, 1), (0, 1), lambda x, y: x + y))
+
 space_conservative = make_vector_field_3d(
     lambda x, y, z: y + z,
     lambda x, y, z: x + z,
@@ -331,6 +346,7 @@ Formulas supported:
 - space divergence `P_x + Q_y + R_z`
 - space curl `<R_y - Q_z, P_z - R_x, Q_x - P_y>`
 - oriented line integrals `integral_C F dot dr`
+- oriented flux integrals over parametric surfaces and graph surfaces
 - Green's theorem circulation form `double integral_R (Q_x - P_y) dA`
 - Green's theorem flux form `double integral_R (P_x + Q_y) dA`
 - conservative-field checks by sampled curl values
