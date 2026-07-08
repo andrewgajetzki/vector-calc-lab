@@ -277,7 +277,7 @@ and approximate the derivative quantities used at the start of vector calculus.
 They also approximate oriented line integrals, surface flux integrals, check for
 conservative fields, estimate potential differences, and apply Green's theorem
 over rectangular, Type I, and Type II plane regions plus Stokes' theorem over
-oriented surfaces in space.
+oriented surfaces in space and the divergence theorem over solids.
 
 ```python
 from src.vectors import Point2D, Point3D
@@ -334,6 +334,13 @@ stokes_field = make_vector_field_3d(
 )
 print(stokes_field.stokes_theorem_over_graph((0, 1), (0, 1), lambda x, y: x + y))
 
+radial_field = make_vector_field_3d(
+    lambda x, y, z: x,
+    lambda x, y, z: y,
+    lambda x, y, z: z,
+)
+print(radial_field.divergence_theorem_over_box((0, 1), (0, 1), (0, 1)))
+
 space_conservative = make_vector_field_3d(
     lambda x, y, z: y + z,
     lambda x, y, z: x + z,
@@ -358,6 +365,7 @@ Formulas supported:
 - Green's theorem circulation form `double integral_R (Q_x - P_y) dA`
 - Green's theorem flux form `double integral_R (P_x + Q_y) dA`
 - Stokes' theorem circulation form `double integral_S curl(F) dot n dS`
+- divergence theorem flux form `triple integral_E div(F) dV`
 - conservative-field checks by sampled curl values
 - potential differences for conservative fields
 

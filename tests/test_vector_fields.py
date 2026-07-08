@@ -379,6 +379,102 @@ def test_vector_field_3d_stokes_theorem_over_graph():
     ) == pytest.approx(-1)
 
 
+def test_vector_field_3d_divergence_theorem_over_box():
+    field = make_vector_field_3d(
+        lambda x, y, z: x,
+        lambda x, y, z: y,
+        lambda x, y, z: z,
+    )
+    closed_surface_flux = (
+        field.flux_integral_parametric(
+            (0, 1),
+            (0, 1),
+            lambda u, v: 1,
+            lambda u, v: u,
+            lambda u, v: v,
+            u_segments=1,
+            v_segments=1,
+        )
+        + field.flux_integral_parametric(
+            (0, 1),
+            (0, 1),
+            lambda u, v: 0,
+            lambda u, v: u,
+            lambda u, v: v,
+            u_segments=1,
+            v_segments=1,
+            reverse_orientation=True,
+        )
+        + field.flux_integral_parametric(
+            (0, 1),
+            (0, 1),
+            lambda u, v: u,
+            lambda u, v: 1,
+            lambda u, v: v,
+            u_segments=1,
+            v_segments=1,
+            reverse_orientation=True,
+        )
+        + field.flux_integral_parametric(
+            (0, 1),
+            (0, 1),
+            lambda u, v: u,
+            lambda u, v: 0,
+            lambda u, v: v,
+            u_segments=1,
+            v_segments=1,
+        )
+        + field.flux_integral_parametric(
+            (0, 1),
+            (0, 1),
+            lambda u, v: u,
+            lambda u, v: v,
+            lambda u, v: 1,
+            u_segments=1,
+            v_segments=1,
+        )
+        + field.flux_integral_parametric(
+            (0, 1),
+            (0, 1),
+            lambda u, v: u,
+            lambda u, v: v,
+            lambda u, v: 0,
+            u_segments=1,
+            v_segments=1,
+            reverse_orientation=True,
+        )
+    )
+
+    assert closed_surface_flux == pytest.approx(3)
+    assert field.divergence_theorem_over_box(
+        (0, 1),
+        (0, 1),
+        (0, 1),
+        x_segments=1,
+        y_segments=1,
+        z_segments=1,
+    ) == pytest.approx(closed_surface_flux)
+
+
+def test_vector_field_3d_divergence_theorem_iterated_region():
+    field = make_vector_field_3d(
+        lambda x, y, z: x,
+        lambda x, y, z: y,
+        lambda x, y, z: z,
+    )
+
+    assert field.divergence_theorem_iterated(
+        (0, 1),
+        lambda x: 0,
+        lambda x: x,
+        lambda x, y: 0,
+        lambda x, y: y,
+        x_segments=400,
+        y_segments=40,
+        z_segments=1,
+    ) == pytest.approx(0.5, rel=1e-5)
+
+
 def test_vector_field_3d_detects_conservative_fields():
     conservative = make_vector_field_3d(
         lambda x, y, z: y + z,
@@ -539,6 +635,28 @@ def test_vector_field_validation():
             (0, 1),
             lambda x, y: x + y,
             h=0,
+        )
+    with pytest.raises(ValueError, match="x_segments"):
+        field_3d.divergence_theorem_over_box(
+            (0, 1),
+            (0, 1),
+            (0, 1),
+            x_segments=0,
+        )
+    with pytest.raises(ValueError, match="h"):
+        field_3d.divergence_theorem_over_box(
+            (0, 1),
+            (0, 1),
+            (0, 1),
+            h=0,
+        )
+    with pytest.raises(ValueError, match="y_bounds"):
+        field_3d.divergence_theorem_iterated(
+            (0, 1),
+            lambda x: 1,
+            lambda x: 0,
+            lambda x, y: 0,
+            lambda x, y: 1,
         )
     with pytest.raises(ValueError, match="tolerance"):
         field_3d.is_conservative_at(0, 0, 0, tolerance=0)
