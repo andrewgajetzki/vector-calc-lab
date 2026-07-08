@@ -296,6 +296,89 @@ def test_vector_field_3d_flux_integral_over_graph():
     ) == pytest.approx(-1)
 
 
+def test_vector_field_3d_stokes_theorem_parametric():
+    field = make_vector_field_3d(
+        lambda x, y, z: -0.5 * y,
+        lambda x, y, z: 0.5 * x,
+        lambda x, y, z: 0,
+    )
+    boundary_circulation = (
+        field.line_integral(
+            lambda t: t,
+            lambda t: 0,
+            lambda t: 0,
+            (0, 1),
+            segments=1,
+        )
+        + field.line_integral(
+            lambda t: 1,
+            lambda t: t,
+            lambda t: 0,
+            (0, 1),
+            segments=1,
+        )
+        + field.line_integral(
+            lambda t: 1 - t,
+            lambda t: 1,
+            lambda t: 0,
+            (0, 1),
+            segments=1,
+        )
+        + field.line_integral(
+            lambda t: 0,
+            lambda t: 1 - t,
+            lambda t: 0,
+            (0, 1),
+            segments=1,
+        )
+    )
+
+    assert boundary_circulation == pytest.approx(1)
+    assert field.stokes_theorem_parametric(
+        (0, 1),
+        (0, 1),
+        lambda u, v: u,
+        lambda u, v: v,
+        lambda u, v: 0,
+        u_segments=1,
+        v_segments=1,
+    ) == pytest.approx(boundary_circulation)
+    assert field.stokes_theorem_parametric(
+        (0, 1),
+        (0, 1),
+        lambda u, v: u,
+        lambda u, v: v,
+        lambda u, v: 0,
+        u_segments=1,
+        v_segments=1,
+        reverse_orientation=True,
+    ) == pytest.approx(-1)
+
+
+def test_vector_field_3d_stokes_theorem_over_graph():
+    field = make_vector_field_3d(
+        lambda x, y, z: -0.5 * y,
+        lambda x, y, z: 0.5 * x,
+        lambda x, y, z: 0,
+    )
+
+    assert field.stokes_theorem_over_graph(
+        (0, 1),
+        (0, 1),
+        lambda x, y: x + y,
+        x_segments=1,
+        y_segments=1,
+    ) == pytest.approx(1)
+    assert field.stokes_theorem_over_graph(
+        (0, 1),
+        (0, 1),
+        lambda x, y: x + y,
+        x_segments=1,
+        y_segments=1,
+        orientation="down",
+    ) == pytest.approx(-1)
+
+
 def test_vector_field_3d_detects_conservative_fields():
     conservative = make_vector_field_3d(
         lambda x, y, z: y + z,
@@ -429,6 +512,29 @@ def test_vector_field_validation():
         )
     with pytest.raises(ValueError, match="h"):
         field_3d.flux_integral_over_graph(
+            (0, 1),
+            (0, 1),
+            lambda x, y: x + y,
+            h=0,
+        )
+    with pytest.raises(ValueError, match="u_segments"):
+        field_3d.stokes_theorem_parametric(
+            (0, 1),
+            (0, 1),
+            lambda u, v: u,
+            lambda u, v: v,
+            lambda u, v: 0,
+            u_segments=0,
+        )
+    with pytest.raises(ValueError, match="orientation"):
+        field_3d.stokes_theorem_over_graph(
+            (0, 1),
+            (0, 1),
+            lambda x, y: x + y,
+            orientation="sideways",
+        )
+    with pytest.raises(ValueError, match="h"):
+        field_3d.stokes_theorem_over_graph(
             (0, 1),
             (0, 1),
             lambda x, y: x + y,

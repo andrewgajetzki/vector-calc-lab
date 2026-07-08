@@ -262,6 +262,11 @@ def run_vector_field_demo() -> None:
         lambda x, y, z: 0,
         lambda x, y, z: 1,
     )
+    stokes_field = make_vector_field_3d(
+        lambda x, y, z: -0.5 * y,
+        lambda x, y, z: 0.5 * x,
+        lambda x, y, z: 0,
+    )
     space_conservative = make_vector_field_3d(
         lambda x, y, z: y + z,
         lambda x, y, z: x + z,
@@ -313,6 +318,15 @@ def run_vector_field_demo() -> None:
         lambda x, y: x + y,
     )
     print(f"Upward flux of <0, 0, 1> through z = x + y: {graph_flux:.6g}")
+    stokes_circulation = stokes_field.stokes_theorem_over_graph(
+        (0, 1),
+        (0, 1),
+        lambda x, y: x + y,
+    )
+    print(
+        "Stokes circulation of <-y/2, x/2, 0> over z = x + y: "
+        f"{stokes_circulation:.6g}"
+    )
     print(
         "Conservative check for <y + z, x + z, x + y> on [-1, 1]^3: "
         f"{space_conservative.is_conservative_on_box((-1, 1), (-1, 1), (-1, 1))}"

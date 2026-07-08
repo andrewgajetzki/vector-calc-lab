@@ -276,7 +276,8 @@ They evaluate and sample vector fields, compute magnitudes and unit directions,
 and approximate the derivative quantities used at the start of vector calculus.
 They also approximate oriented line integrals, surface flux integrals, check for
 conservative fields, estimate potential differences, and apply Green's theorem
-over rectangular, Type I, and Type II plane regions.
+over rectangular, Type I, and Type II plane regions plus Stokes' theorem over
+oriented surfaces in space.
 
 ```python
 from src.vectors import Point2D, Point3D
@@ -326,6 +327,13 @@ unit_flux = make_vector_field_3d(
 )
 print(unit_flux.flux_integral_over_graph((0, 1), (0, 1), lambda x, y: x + y))
 
+stokes_field = make_vector_field_3d(
+    lambda x, y, z: -0.5 * y,
+    lambda x, y, z: 0.5 * x,
+    lambda x, y, z: 0,
+)
+print(stokes_field.stokes_theorem_over_graph((0, 1), (0, 1), lambda x, y: x + y))
+
 space_conservative = make_vector_field_3d(
     lambda x, y, z: y + z,
     lambda x, y, z: x + z,
@@ -349,6 +357,7 @@ Formulas supported:
 - oriented flux integrals over parametric surfaces and graph surfaces
 - Green's theorem circulation form `double integral_R (Q_x - P_y) dA`
 - Green's theorem flux form `double integral_R (P_x + Q_y) dA`
+- Stokes' theorem circulation form `double integral_S curl(F) dot n dS`
 - conservative-field checks by sampled curl values
 - potential differences for conservative fields
 
