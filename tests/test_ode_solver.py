@@ -1,3 +1,5 @@
+import math
+
 import pytest
 
 from src.ode_solver import (
@@ -7,6 +9,7 @@ from src.ode_solver import (
     sinusoidal_forcing,
     solve_homogeneous_second_order,
     solve_linear_second_order,
+    solve_power_series_second_order,
 )
 
 
@@ -110,6 +113,51 @@ def test_linear_second_order_resonant_sinusoidal_forcing_solution():
     )
 
 
+def test_power_series_solution_for_homogeneous_equation():
+    solution = solve_power_series_second_order(
+        (1,),
+        (0,),
+        (1,),
+        y0=1,
+        y_prime0=0,
+        terms=6,
+    )
+
+    assert solution.equation == "Equation: (1)y'' + (0)y' + (1)y = 0"
+    assert solution.coefficients == pytest.approx((1, 0, -0.5, 0, 1 / 24, 0))
+    assert solution.series == "Series: y = 1 - 0.5*x^2 + 0.0416667*x^4"
+    assert solution.value_at(0.1) == pytest.approx(math.cos(0.1), rel=1e-8)
+
+
+def test_power_series_solution_for_nonhomogeneous_equation():
+    solution = solve_power_series_second_order(
+        (1,),
+        (0,),
+        (1,),
+        forcing_coefficients=(0, 1),
+        y0=0,
+        y_prime0=0,
+        terms=6,
+    )
+
+    assert solution.coefficients == pytest.approx((0, 0, 0, 1 / 6, 0, -1 / 120))
+    assert solution.series == "Series: y = 0.166667*x^3 - 0.00833333*x^5"
+
+
+def test_power_series_solution_for_variable_coefficient_equation():
+    solution = solve_power_series_second_order(
+        (1,),
+        (0,),
+        (0, -1),
+        y0=1,
+        y_prime0=0,
+        terms=7,
+    )
+
+    assert solution.coefficients == pytest.approx((1, 0, 0, 1 / 6, 0, 0, 1 / 180))
+    assert solution.series == "Series: y = 1 + 0.166667*x^3 + 0.00555556*x^6"
+
+
 def test_zero_a_raises_value_error():
     with pytest.raises(ValueError, match="nonzero"):
         solve_homogeneous_second_order(0, 1, 1)
@@ -118,3 +166,12 @@ def test_zero_a_raises_value_error():
 def test_invalid_frequency_raises_value_error():
     with pytest.raises(ValueError, match="frequency"):
         sinusoidal_forcing(frequency=0)
+
+
+def test_power_series_validation():
+    with pytest.raises(ValueError, match="terms"):
+        solve_power_series_second_order((1,), (0,), (1,), terms=1)
+    with pytest.raises(ValueError, match="ordinary point"):
+        solve_power_series_second_order((0,), (0,), (1,))
+    with pytest.raises(ValueError, match="a2_coefficients"):
+        solve_power_series_second_order((), (0,), (1,))

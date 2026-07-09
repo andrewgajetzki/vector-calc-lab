@@ -7,6 +7,7 @@ from .ode_solver import (
     sinusoidal_forcing,
     solve_homogeneous_second_order,
     solve_linear_second_order,
+    solve_power_series_second_order,
 )
 
 __all__ = [
@@ -16,4 +17,5 @@ __all__ = [
     "sinusoidal_forcing",
     "solve_homogeneous_second_order",
     "solve_linear_second_order",
+    "solve_power_series_second_order",
 ]

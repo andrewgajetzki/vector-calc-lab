@@ -1,8 +1,9 @@
-"""Solve second-order linear ODEs with constant coefficients."""
+"""Solve and approximate second-order linear ODEs."""
 
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 
@@ -69,6 +70,28 @@ class ODESolution:
             parts.append(self.particular_solution)
         parts.append(self.general_solution)
         return "\n".join(parts)
+
+
+@dataclass(frozen=True)
+class PowerSeriesSolution:
+    """A truncated ordinary-point power series solution."""
+
+    equation: str
+    center: float
+    coefficients: tuple[float, ...]
+    recurrence: str
+    series: str
+
+    def value_at(self, x: float) -> float:
+        """Evaluate the truncated series at ``x``."""
+        shifted = x - self.center
+        return sum(
+            coefficient * shifted**index
+            for index, coefficient in enumerate(self.coefficients)
+        )
+
+    def as_text(self) -> str:
+        return "\n".join([self.equation, self.recurrence, self.series])
 
 
 def constant_forcing(value: float) -> LinearForcingTerm:
@@ -166,6 +189,74 @@ def solve_linear_second_order(
         equation=equation,
         complementary_solution=complementary_solution,
         particular_solution=particular_solution,
+    )
+
+
+def solve_power_series_second_order(
+    a2_coefficients: Sequence[float],
+    a1_coefficients: Sequence[float],
+    a0_coefficients: Sequence[float],
+    forcing_coefficients: Sequence[float] | None = None,
+    y0: float = 1.0,
+    y_prime0: float = 0.0,
+    terms: int = 8,
+    center: float = 0.0,
+) -> PowerSeriesSolution:
+    """Build an ordinary-point series for ``a2*y'' + a1*y' + a0*y = g``.
+
+    Coefficient sequences are ordered by increasing powers of ``x - center``.
+    """
+    _validate_terms(terms)
+    a2 = _validate_coefficient_sequence(a2_coefficients, "a2_coefficients")
+    a1 = _validate_coefficient_sequence(a1_coefficients, "a1_coefficients")
+    a0 = _validate_coefficient_sequence(a0_coefficients, "a0_coefficients")
+    forcing = _coefficient_sequence(forcing_coefficients)
+    if _is_close(a2[0]):
+        raise ValueError("a2_coefficients[0] must be nonzero at an ordinary point.")
+
+    coefficients = [0.0] * terms
+    coefficients[0] = y0
+    coefficients[1] = y_prime0
+    for power in range(terms - 2):
+        known_terms = 0.0
+        for coefficient_index in range(1, power + 1):
+            derivative_index = power - coefficient_index + 2
+            known_terms += (
+                _coefficient_at(a2, coefficient_index)
+                * derivative_index
+                * (derivative_index - 1)
+                * coefficients[derivative_index]
+            )
+        for coefficient_index in range(power + 1):
+            derivative_index = power - coefficient_index + 1
+            known_terms += (
+                _coefficient_at(a1, coefficient_index)
+                * derivative_index
+                * coefficients[derivative_index]
+            )
+            known_terms += (
+                _coefficient_at(a0, coefficient_index)
+                * coefficients[power - coefficient_index]
+            )
+
+        divisor = a2[0] * (power + 2) * (power + 1)
+        coefficients[power + 2] = (
+            _coefficient_at(forcing, power) - known_terms
+        ) / divisor
+
+    coefficient_tuple = tuple(coefficients)
+    equation = _format_series_ode_equation(a2, a1, a0, forcing, center)
+    recurrence = (
+        "Recurrence: coefficients satisfy "
+        "a2_0*(n + 2)*(n + 1)*c_(n+2) plus known lower terms = g_n"
+    )
+    series = f"Series: y = {_format_series_expression(coefficient_tuple, center)}"
+    return PowerSeriesSolution(
+        equation=equation,
+        center=center,
+        coefficients=coefficient_tuple,
+        recurrence=recurrence,
+        series=series,
     )
 
 
@@ -302,6 +393,35 @@ def _validate_positive_frequency(frequency: float) -> None:
         raise ValueError("frequency must be positive.")
 
 
+def _validate_terms(terms: int) -> None:
+    if terms < 2:
+        raise ValueError("terms must be at least 2.")
+
+
+def _validate_coefficient_sequence(
+    coefficients: Sequence[float],
+    name: str,
+) -> tuple[float, ...]:
+    coefficient_tuple = _coefficient_sequence(coefficients)
+    if not coefficient_tuple:
+        raise ValueError(f"{name} must contain at least one coefficient.")
+    return coefficient_tuple
+
+
+def _coefficient_sequence(
+    coefficients: Sequence[float] | None,
+) -> tuple[float, ...]:
+    if coefficients is None:
+        return (0.0,)
+    return tuple(float(coefficient) for coefficient in coefficients)
+
+
+def _coefficient_at(coefficients: Sequence[float], index: int) -> float:
+    if index >= len(coefficients):
+        return 0.0
+    return coefficients[index]
+
+
 def _format_characteristic_equation(a: float, b: float, c: float) -> str:
     terms = [
         _format_power_term(a, "r^2"),
@@ -320,6 +440,61 @@ def _format_linear_ode_left(a: float, b: float, c: float) -> str:
     ]
     equation = "".join(term for term in terms if term)
     return equation.removeprefix(" + ").removeprefix(" ")
+
+
+def _format_series_ode_equation(
+    a2: Sequence[float],
+    a1: Sequence[float],
+    a0: Sequence[float],
+    forcing: Sequence[float],
+    center: float,
+) -> str:
+    return (
+        "Equation: "
+        f"({_format_series_polynomial(a2, center)})y'' + "
+        f"({_format_series_polynomial(a1, center)})y' + "
+        f"({_format_series_polynomial(a0, center)})y = "
+        f"{_format_series_polynomial(forcing, center)}"
+    )
+
+
+def _format_series_polynomial(coefficients: Sequence[float], center: float) -> str:
+    return _format_series_expression(coefficients, center)
+
+
+def _format_series_expression(coefficients: Sequence[float], center: float) -> str:
+    variable = _format_shifted_variable(center)
+    pieces = []
+    for power, coefficient in enumerate(coefficients):
+        if _is_close(coefficient):
+            continue
+        term = _format_positive_series_term(abs(coefficient), power, variable)
+        if not pieces:
+            pieces.append(f"-{term}" if coefficient < 0 else term)
+        elif coefficient < 0:
+            pieces.append(f" - {term}")
+        else:
+            pieces.append(f" + {term}")
+    return "".join(pieces) if pieces else "0"
+
+
+def _format_positive_series_term(
+    coefficient: float,
+    power: int,
+    variable: str,
+) -> str:
+    if power == 0:
+        return _format_number(coefficient)
+    factor = variable if power == 1 else f"{variable}^{power}"
+    return _format_scaled_factor(coefficient, factor)
+
+
+def _format_shifted_variable(center: float) -> str:
+    if _is_close(center):
+        return "x"
+    if center > 0:
+        return f"(x - {_format_number(center)})"
+    return f"(x + {_format_number(abs(center))})"
 
 
 def _format_power_term(coefficient: float, variable: str) -> str:

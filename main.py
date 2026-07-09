@@ -11,6 +11,7 @@ from src.ode_solver import (
     exponential_forcing,
     solve_homogeneous_second_order,
     solve_linear_second_order,
+    solve_power_series_second_order,
 )
 from src.parametric_equations import make_curve, points_table
 from src.polar_coordinates import make_polar_curve, polar_to_cartesian_table
@@ -522,6 +523,14 @@ def run_ode_demo() -> None:
     homogeneous = solve_homogeneous_second_order(1, 3, 2)
     constant_forced = solve_linear_second_order(1, 0, -1, constant_forcing(2))
     resonant_forced = solve_linear_second_order(1, -2, 1, exponential_forcing(1, 1))
+    series_solution = solve_power_series_second_order(
+        (1,),
+        (0,),
+        (1,),
+        y0=1,
+        y_prime0=0,
+        terms=6,
+    )
 
     print("Second-Order Linear ODEs")
     print()
@@ -536,6 +545,10 @@ def run_ode_demo() -> None:
     print("Example resonant forcing: y'' - 2y' + y = e^x")
     print()
     print(resonant_forced.as_text())
+    print()
+    print("Example ordinary-point series: y'' + y = 0, y(0)=1, y'(0)=0")
+    print()
+    print(series_solution.as_text())
 
 
 if __name__ == "__main__":
